@@ -10,4 +10,4 @@ zephyr_include_directories(${APPLICATION_SOURCE_DIR}/src/tls_config)
 
 #use for testing only, will update keys every X seconds, default is 600
 #add_definitions(-DEN_INTERVAL_LENGTH=11)
-add_definitions(-DEN_INTERVAL_LENGTH=1)
+#add_definitions(-DEN_INTERVAL_LENGTH=1)
