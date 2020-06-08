@@ -37,6 +37,6 @@ However, many would need the firmware to be shipped to manufactures.
 * Watch UI
 * Pine Time could be good for testing
 
-##TODOs App / Basestation
+##TODOs App and Basestation
 * extend this beyond the simple basestation
 * read keys form national databases
