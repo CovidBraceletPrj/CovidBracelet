@@ -31,12 +31,12 @@ We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zep
 * time sync
 * firmware of the air updates (signed)
 
-##TODOs Wristband
+## TODOs Wristband
 Possible platforms for real-world deployment many, as many of the cheap fitness trackers base on NRF52 or chips with similar capabilities.
 However, many would need the firmware to be shipped to manufactures.
 * Watch UI
 * Pine Time could be good for testing
 
-##TODOs App and Basestation
+## TODOs App and Basestation
 * extend this beyond the simple basestation
 * read keys form national databases
