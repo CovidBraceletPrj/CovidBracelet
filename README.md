@@ -7,7 +7,7 @@ We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zep
 
 ## Features
 * Code sends out and receives exposure beacons
-  * Rolling, encrypted, anonymous beacons as specified by Google  and Apple
+  * Rolling, encrypted, anonymous beacons as specified by Google and Apple for Covid Contact Tracing
   * Compatible with Apple iOS and Android phones
 * Upon infection upload keys to a public database
 * Retrieve keys of infections from database
