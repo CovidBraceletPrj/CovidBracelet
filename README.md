@@ -17,6 +17,7 @@ We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zep
 * Retrieve keys of infections from database
   * computes rolling proximity identifiers 
   * compares to stored contacts to check for exposure 
+* Note: as we do not use the flash for key storage, this only works on nrf52480 or you can just store a very small number of keys
 
 **Note: this is a proof of concept and not ready for production**
 
