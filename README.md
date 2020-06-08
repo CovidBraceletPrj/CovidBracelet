@@ -2,17 +2,21 @@
 
 **Contributions Welcome!**
 
-## Get Started
+## Get Started: Based on Zephyr OS and NRF52 BLE SOCs
 We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zephyr 2.2. We are waiting for the Zepyhr 2.3 release. To build, please install Zephyr and compile via west. Note that Platform.io does not support Zephyr 2.3 rc / Zepyhr master at the current time.
 
 ## Features
-* Code sends out and receives exposure beacons
-  * Rolling, encrypted, anonymous beacons as specified by Google and Apple for Covid Contact Tracing
+* Code sends out and receives exposure beacons as specified by Google and Apple for Covid Contact Tracing
+  * Rolling, encrypted, anonymous beacons 
   * Compatible with Apple iOS and Android phones
+  * with rolling proximity identifiers and encrypted metadata
+  * proximity identifiers and BLE addresses change every 10 minutes
+* stores own keys for 14 days
+* stores contacts with more than 5 minute duration
 * Upon infection upload keys to a public database
 * Retrieve keys of infections from database
-  * to check for exposure
-* Based on Zephyr OS and NRF52 BLE SOCs
+  * computes rolling proximity identifiers 
+  * compares to stored contacts to check for exposure 
 
 **Note: this is a proof of concept and not ready for production**
 
