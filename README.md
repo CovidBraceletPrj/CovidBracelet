@@ -3,7 +3,7 @@
 **Contributions Welcome!**
 
 ## Get Started
-We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zephyr 2.2. We are waiting for the Zepyhr 2.3 release. To build, please install Zephyr and compile via west. Note that Platform.io sadly does not support Zephyr 2.3 rc / Zepyhr master at the current time.
+We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zephyr 2.2. We are waiting for the Zepyhr 2.3 release. To build, please install Zephyr and compile via west. Note that Platform.io does not support Zephyr 2.3 rc / Zepyhr master at the current time.
 
 ## Features
 * Code sends out and receives exposure beacons
