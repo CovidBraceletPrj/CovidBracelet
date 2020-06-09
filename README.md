@@ -21,6 +21,10 @@ We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zep
 
 **Note: this is a proof of concept and not ready for production**
 
+## Demo Video
+
+[![Video Demo](https://img.youtube.com/vi/tYGsFJC3LtE/0.jpg)](https://youtu.be/tYGsFJC3LtE)
+
 ## Open / Possible next steps
 * extensive compatibility testing with Apple iOS and Android devices
 * contininous integration testing
