@@ -31,7 +31,7 @@ We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zep
 * store long-term contacts in flash
 * Energy efficiency
 * BLE advertisements sets
-* Secure GAT services
+* Secure GATT services
 * More platforms / OS?
 * time sync
 * firmware of the air updates (signed)
