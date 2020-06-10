@@ -14,9 +14,8 @@
 * Retrieve keys of infections from database
   * computes rolling proximity identifiers 
   * compares to stored contacts to check for exposure 
-* Note: as we do not use the flash for key storage, this only works on nrf52480 or you can just store a very small number of keys
 
-Based on Zephyr OS and NRF52 BLE SOCs
+Builds on on Zephyr OS and NRF52 BLE SOCs. Note: as we do not use the flash for key storage, this only works on nrf52480 or you can just store a very small number of keys
 
 ## Get Started: 
 We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zephyr 2.2. We are waiting for the Zepyhr 2.3 release. To build, please install Zephyr and compile via west. Note that Platform.io does not support Zephyr 2.3 rc / Zepyhr master at the current time.
