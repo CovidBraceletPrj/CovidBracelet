@@ -44,13 +44,13 @@ static struct bt_data ad[] = {
      BT_DATA(BT_DATA_SVC_DATA16, &covid_adv_svd, sizeof(covid_adv_svd_t))
  };
 
- static void scan_cb(const bt_addr_le_t *addr, s8_t rssi, u8_t adv_type, struct net_buf_simple *buf)
+ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, struct net_buf_simple *buf)
 {
 	if( adv_type == 3 ){
-		u8_t len = 0;
+		uint8_t len = 0;
 
 		while (buf->len > 1) {
-			u8_t type;
+			uint8_t type;
 
 			len = net_buf_simple_pull_u8(buf);
 			if (!len) {

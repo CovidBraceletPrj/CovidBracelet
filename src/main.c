@@ -91,13 +91,13 @@
 static struct gpio_callback button_0_cb_data;
 static struct gpio_callback button_1_cb_data;
 
-void button_0_pressed(struct device *dev, struct gpio_callback *cb, u32_t pins){
+void button_0_pressed(struct device *dev, struct gpio_callback *cb, uint32_t pins){
 	set_infection(true);
 	gpio_pin_set(dev, PIN, (int)1);
 	printk("Button 0 (=infected) pressed at %" PRIu32 "\n", k_cycle_get_32());
 }
 
-void button_1_pressed(struct device *dev, struct gpio_callback *cb, u32_t pins){
+void button_1_pressed(struct device *dev, struct gpio_callback *cb, uint32_t pins){
 	set_infection(false);
 	gpio_pin_set(dev, PIN, (int)0);
 	printk("Button 1 (=healthy) pressed at %" PRIu32 "\n", k_cycle_get_32());

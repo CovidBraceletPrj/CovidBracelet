@@ -94,16 +94,16 @@ static const struct bt_data ad[] = {
 		0x98, 0x6A, 0x9F, 0x69, 0x79, 0x0D, 0x11, 0xF2),
 };
 
-static ssize_t read_next_key(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
-	u32_t id = get_next_infected_key_id();
+static ssize_t read_next_key(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
+	uint32_t id = get_next_infected_key_id();
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &id, sizeof(id));
 }
 
-static ssize_t read_key_cnt(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_cnt(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	unsigned int cnt = get_period_cnt_if_infected();
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &cnt, sizeof(unsigned int));
 }
-static ssize_t read_key_0(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_0(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(0, &size);
 	// printk("read key 0, size %u, pointer %p\n", size, p);
@@ -111,67 +111,67 @@ static ssize_t read_key_0(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	// printk("RPI: "); print_rpi((rolling_proximity_identifier_t*)&p->periodKey); printk("\n");
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_1(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_1(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(1, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_2(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_2(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(2, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_3(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_3(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(3, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_4(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_4(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(4, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_5(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_5(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(5, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_6(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_6(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(6, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_7(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_7(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(7, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_8(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_8(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(8, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_9(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_9(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(9, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, p, size);
 }
-static ssize_t read_key_10(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_10(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(10, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &p, size);
 }
-static ssize_t read_key_11(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_11(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(11, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &p, size);
 }
-static ssize_t read_key_12(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_12(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(12, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &p, size);
 }
-static ssize_t read_key_13(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, u16_t len, u16_t offset){
+static ssize_t read_key_13(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset){
 	size_t size = 0;
 	period_t* p = get_period_if_infected(13, &size);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset, &p, size);
@@ -180,8 +180,8 @@ static ssize_t read_key_13(struct bt_conn *conn, const struct bt_gatt_attr *attr
 //TODO: copy more than one key
 static ssize_t write_new_key(struct bt_conn *conn,
 			      const struct bt_gatt_attr *attr,
-			      const void *buf, u16_t len, u16_t offset,
-			      u8_t flags)
+			      const void *buf, uint16_t len, uint16_t offset,
+			      uint8_t flags)
 {
 	//printk("write key\n");
 	if( offset != 0 ){
@@ -197,7 +197,7 @@ static ssize_t write_new_key(struct bt_conn *conn,
 	return len;
 }
 
-static void connected(struct bt_conn *conn, u8_t err)
+static void connected(struct bt_conn *conn, uint8_t err)
 {
 
 	if (err) {
@@ -207,7 +207,7 @@ static void connected(struct bt_conn *conn, u8_t err)
 	}
 }
 
-static void disconnected(struct bt_conn *conn, u8_t reason)
+static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	//printk("Disconnected (reason 0x%02x)\n", reason);
 }
