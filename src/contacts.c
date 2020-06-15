@@ -33,11 +33,47 @@ typedef struct contact {
     associated_encrypted_metadata_t associated_encrypted_metadata;
 } contact_t;
 
+
+
+
+
+//short term contacts: number of people we meet in the 5 minute window. Records any contact, will later be checked whether this contact is longer than 5 minutes
+#ifndef MAX_CONTACTS
 #define MAX_CONTACTS 1000
+#endif
+
+
+//number of contact during on day. 
+#ifndef MAX_PERIOD_CONTACTS
+#define MAX_PERIOD_CONTACTS 400
+#endif
+
+//number of perdios (=days) we record data for
+#ifndef PERIODS
+#define PERIODS 14
+#endif
+
+
+typedef struct period_contact {
+    uint32_t duration;
+    uint16_t cnt;
+    int8_t max_rssi; //TODO also store avg rssi?
+    rolling_proximity_identifier_t rolling_proximity_identifier;
+    associated_encrypted_metadata_t associated_encrypted_metadata;
+} period_contact_t;
+
+
+typedef struct period_contacts{
+    int cnt;
+    period_contact_t period_contacts[MAX_PERIOD_CONTACTS];
+} period_contacts_t;
 
 static contact_t contacts[MAX_CONTACTS];
 static uint32_t contact_count = 0;
 
+static period_contacts_t period_contacts[PERIODS];
+static int period_index = 0;
+static int32_t next_infected_key_id = 0;
 
 void print_rpi(rolling_proximity_identifier_t* rpi){
     for( int i = 0; i < sizeof(rolling_proximity_identifier_t); i++){
@@ -100,25 +136,7 @@ int check_add_contact(uint32_t contact_time, rolling_proximity_identifier_t* rpi
     return 0;
 }
 
-typedef struct period_contact {
-    uint32_t duration;
-    uint16_t cnt;
-    int8_t max_rssi; //TODO also store avg rssi?
-    rolling_proximity_identifier_t rolling_proximity_identifier;
-    associated_encrypted_metadata_t associated_encrypted_metadata;
-} period_contact_t;
 
-#define MAX_PERIOD_CONTACTS 400
-#define PERIODS 14
-
-typedef struct period_contacts{
-    int cnt;
-    period_contact_t period_contacts[MAX_PERIOD_CONTACTS];
-} period_contacts_t;
-
-static period_contacts_t period_contacts[PERIODS];
-static int period_index = 0;
-static int32_t next_infected_key_id = 0;
 
 //10 minutes are over and we got new keys. Time to also sort our short term contacts and move them to long-term log
 //TODO: move long-term storage to flash, as we have limited space in RAM
@@ -210,9 +228,6 @@ void add_infected_key(period_t* period){
 uint32_t get_next_infected_key_id(){
     return next_infected_key_id;
 }
-
-
-
 
 void init_contacts(){
     contact_count = 0;
