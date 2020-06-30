@@ -27,19 +27,21 @@ We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zep
 [![Video Demo](https://img.youtube.com/vi/tYGsFJC3LtE/0.jpg)](https://youtu.be/tYGsFJC3LtE)
 
 ## Open / Possible next steps
-* extensive compatibility testing with Apple iOS and Android devices
-* contininous integration testing
-* set device name in Flash
+* firmware of the air updates (signed): done in testing
 * fix entropy: keys are always the same on boot up
+* time sync
+* set device name, user id or so in Flash
 * set scanning interval to the correct value, for now we just use the default
 * set advertisement interval, correct value, for now we just use the default: should be 200-270 milliseconds
 * store long-term contacts in flash
+* get infections from DB, check their signatures
+* extensive logging: crash, reboot, battery level, charging state, contacts, memory useage, flash usage, 
+* extensive compatibility testing with Apple iOS and Android devices
+* contininous integration testing
 * Energy efficiency
 * BLE advertisements sets
-* Secure GATT services
-* More platforms / OS?
-* time sync
-* firmware of the air updates (signed)
+* Secure GATT services and authentication of base statation in general
+* More platforms: with display etc.
 
 ## TODOs Wristband
 Possible platforms for real-world deployment many, as many of the cheap fitness trackers base on NRF52 or chips with similar capabilities.
