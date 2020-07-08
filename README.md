@@ -1,4 +1,4 @@
-# Covid Bracelet, compatibile with iOS and Android
+# Covid Bracelet, compatibile with Covid Apps on iOS and Android
 
 **Contributions Welcome!** 
 
