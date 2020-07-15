@@ -34,6 +34,7 @@ We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zep
 * set scanning interval to the correct value, for now we just use the default
 * set advertisement interval, correct value, for now we just use the default: should be 200-270 milliseconds
 * store long-term contacts in flash
+* set transmit power and store this in the corona beacons
 * get infections from DB, check their signatures
 * extensive logging: crash, reboot, battery level, charging state, contacts, memory useage, flash usage, 
 * extensive compatibility testing with Apple iOS and Android devices
