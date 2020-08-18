@@ -2,6 +2,8 @@
 
 **Contributions Welcome!** 
 
+[![Actions Status](https://github.com/CovidBraceletPrj/CovidBracelet/workflows/main/badge.svg)](https://github.com/CovidBraceletPrj/CovidBracelet/actions)
+
 ## Features
 *  Sends and receives exposure beacons as specified by Google and Apple for Covid Contact Tracing
   * Rolling, encrypted, anonymous beacons 
