@@ -15,6 +15,7 @@
 #include <inttypes.h>
 #include <bluetooth/hci.h>
 #include <zephyr/types.h>
+#include <random/rand32.h>
 
 #include "exposure-notification.h"
 #include "covid_types.h"
