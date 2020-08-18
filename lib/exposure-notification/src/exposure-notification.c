@@ -4,20 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
+#if EN_INCLUDE_ZEPHYR_DEPS
 #include <zephyr.h>
 #include <zephyr/types.h>
 #include <stddef.h>
 #include <sys/printk.h>
 #include <sys/util.h>
+#endif
+
 #include <string.h>
 
-#include <mbedtls/entropy.h>
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/hkdf.h>
-#include <mbedtls/sha256.h>
-#include <mbedtls/aes.h>
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/hkdf.h"
+#include "mbedtls/sha256.h"
+#include "mbedtls/aes.h"
 
 #include "exposure-notification.h"
+
 
 
 static mbedtls_ctr_drbg_context ctr_drbg;

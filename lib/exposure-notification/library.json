@@ -1,0 +1,14 @@
+{
+    "description": "exposure-notification",
+    "frameworks": "*",
+    "keywords": "exposure, notification, contact, tracking, tracing",
+    "name": "exposure-notification",
+    "platforms": "*",
+    "version": "0.1",
+    "dependencies":  [
+        {
+            "name": "mbedtls",
+            "version": "^2.16.4"
+        }
+    ]
+}
