@@ -17,8 +17,14 @@
 
 Builds on on Zephyr OS and NRF52 BLE SOCs. Note: as we for now do not use the flash for key storage, this currently only works on nrf52480 or you can just store a very small number of keys. Moving the keys to flash is on the TODO list and will fix this. 
 
-## Get Started: 
-We use Zepyhr master as we need a newer mbed TLS as the ones that ships with Zephyr 2.2. We are waiting for the Zepyhr 2.3 release. To build, please install Zephyr and compile via west. Note that Platform.io does not support Zephyr 2.3 rc / Zepyhr master at the current time.
+## Get Started:
+This project is based on platformIO, see:  [https://platformio.org/platformio-ide](https://platformio.org/platformio-ide)
+
+## Testing
+To run the tests for the desktop environment select the test task for desktop or run:
+```
+platformio test -e desktop
+```
 
 **Note: this is a proof of concept and not ready for production**
 
