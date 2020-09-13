@@ -87,6 +87,46 @@ static associated_encrypted_metadata_t encryptedMetadata;
 static bool init = 1;
 static bool infected = 0;
 
+
+
+static void test_against_fixtures(void) {
+    // First define base values
+    ENIntervalNumber intervalNumber = 2642976;
+    ENPeriodKey periodKey = {.b = {0x75, 0xc7, 0x34, 0xc6, 0xdd, 0x1a, 0x78, 0x2d, 0xe7, 0xa9, 0x65, 0xda, 0x5e, 0xb9, 0x31, 0x25}};
+    unsigned char metadata[4] = {0x40, 0x08, 0x00, 0x00};
+
+    // define the expected values
+    ENPeriodIdentifierKey expectedPIK = {.b = {0x18, 0x5a, 0xd9, 0x1d, 0xb6, 0x9e, 0xc7, 0xdd, 0x04, 0x89, 0x60, 0xf1, 0xf3, 0xba, 0x61, 0x75}};
+    ENPeriodMetadataEncryptionKey expectedPMEK = {.b = {0xd5, 0x7c, 0x46, 0xaf, 0x7a, 0x1d, 0x83, 0x96, 0x5b, 0x9b, 0xed, 0x8b, 0xd1, 0x52, 0x93, 0x6a}};
+
+    ENIntervalIdentifier expectedIntervalIdentifier = {.b = {0x8b, 0xe6, 0xcd, 0x37, 0x1c, 0x5c, 0x89, 0x16, 0x04, 0xbf, 0xbe, 0x49, 0xdf, 0x84, 0x50, 0x96}};
+    unsigned char expectedEncryptedMetadata[4] = {0x72, 0x03, 0x38, 0x74};
+
+
+    ENPeriodIdentifierKey pik;
+    en_derive_period_identifier_key(&pik, &periodKey);
+
+
+	printk("expectedPIK: "); print_key(&expectedPIK); printk(", ");
+	printk("actualPIK: "); print_key(&pik); printk(", ");
+
+	ENIntervalIdentifier intervalIdentifier;
+    en_derive_interval_identifier(&intervalIdentifier, &pik, intervalNumber);
+
+	printk("expectedRPI: "); print_key(&expectedIntervalIdentifier); printk(", ");
+	printk("actualRPI: "); print_key(&intervalIdentifier); printk(", ");
+
+
+    /*ENPeriodMetadataEncryptionKey pmek;
+    en_derive_period_metadata_encryption_key(&pmek, &periodKey);
+    TEST_ASSERT_EQUAL_KEY(expectedPMEK, pmek);
+
+    unsigned char encryptedMetadata[sizeof(metadata)] = {0};
+    en_encrypt_interval_metadata(&pmek, &intervalIdentifier, metadata, encryptedMetadata, sizeof(metadata));
+    TEST_ASSERT_EQUAL_CHAR_ARRAY(expectedEncryptedMetadata, encryptedMetadata, sizeof(expectedEncryptedMetadata));*/
+}
+
+
 static void new_period_key(time_t currentTime ){
 	printk("\n----------------------------------------\n\n");
 	printk("\n----------------------------------------\n\n");
@@ -121,6 +161,7 @@ static void check_keys(struct k_work *work){
 		//printk("\n----------------------------------------\n\n");
 		printk("Time: %llu, ", currentTime);
 		printk("Interval: %u, ", currentInterval);
+		printk("TEK: "); print_rpi((rolling_proximity_identifier_t*)&periods[current_period_index].periodKey); printk(", ");
 		printk("RPI: "); print_rpi((rolling_proximity_identifier_t*)&intervalIdentifier); printk(", ");
 		printk("AEM: "); print_aem(&encryptedMetadata); printk("\n");
 
@@ -133,7 +174,6 @@ static void check_keys(struct k_work *work){
 			key_change(current_period_index);
 		}
 		init = 0;
-
 	}
 }
 
@@ -155,10 +195,14 @@ static const struct bt_le_scan_param scan_param = {
 #define KEY_CHECK_INTERVAL (K_MSEC(EN_INTERVAL_LENGTH * 1000 / 10))
 
 int init_covid(){
+
 	// TODO: Use real unix timestamp!: currentTime = time(NULL);
 	init = 1;
 	period_cnt = 0;
 	infected = 0;
+
+	test_against_fixtures();
+
 	check_keys(NULL);
 
 	int err = 0;
@@ -167,6 +211,7 @@ int init_covid(){
 		printk("Starting scanning failed (err %d)\n", err);
 		return err;
 	}
+
 
 	k_timer_start(&my_timer, KEY_CHECK_INTERVAL, KEY_CHECK_INTERVAL);
 	return 0;

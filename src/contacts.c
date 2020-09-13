@@ -75,6 +75,12 @@ static period_contacts_t period_contacts[PERIODS];
 static int period_index = 0;
 static int32_t next_infected_key_id = 0;
 
+void print_key(_ENBaseKey* key){
+    for( int i = 0; i < sizeof(key->b); i++){
+        printk("%02x", key->b[i]);
+    }
+}
+
 void print_rpi(rolling_proximity_identifier_t* rpi){
     for( int i = 0; i < sizeof(rolling_proximity_identifier_t); i++){
         printk("%02x", rpi->data[i]);
