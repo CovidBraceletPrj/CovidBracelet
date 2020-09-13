@@ -62,3 +62,39 @@ However, many would need the firmware to be shipped to manufactures.
 ## TODOs App and Basestation
 * extend this beyond the simple basestation
 * read keys form national databases
+
+
+
+
+## Updates Over the Air
+
+### Compiling the Bootloader
+The bootloader is responsible to manage the application images.
+
+Make sure that you have installed the correct toolchain
+
+export GNUARMEMB_TOOLCHAIN_PATH="~/Applications/ARM"
+export ZEPHYR_TOOLCHAIN_VARIANT=gnuarmemb   
+You might need to install missing python modules
+
+1. Install west "python3 -m pip install west"
+2. Create temporary directory "mkdir boot && cd boot"
+3. Init west "west init --mr v2.3.0"
+4. Update west "west update"
+5. Update ./bootloader/mcuboot/boot/zephyr/keys.c and update it with custom keys (required for production usage)
+5. Build the bootloader "west build -d build -b nrf52840dk_nrf52840 -s ./bootloader/mcuboot/boot/zephyr" (if you encounter errors, remove the build directory before retrying)
+
+
+### Install packages for signing
+
+```
+~/.platformio/penv/bin/python3 -m pip install cryptography cbor intelhex
+```
+
+
+TODO:
+
+Check arguments for imgtool signing
+* slot size
+* alignment
+* header size
