@@ -284,11 +284,14 @@ static void check_keys(struct k_work *work)
 		}
 
 		// we now generate the new interval identifier and re-encrypt the metadata
-		en_derive_interval_identifier(&intervalIdentifier, &periods[current_period_index].periodKey, currentInterval);
-
+		// TODO: The period identifier key does not need to be derived everytime!
+		ENPeriodIdentifierKey pik;
+		en_derive_period_identifier_key(&pik, &periods[current_period_index].periodKey);
+		en_derive_interval_identifier(&intervalIdentifier, &pik, currentInterval);
+		
 		en_derive_period_metadata_encryption_key(&periodMetadataEncryptionKey, &periods[current_period_index].periodKey);
-
-		en_encrypt_interval_metadata(&periodMetadataEncryptionKey, &intervalIdentifier, (unsigned char *)&bt_metadata, (unsigned char *)&encryptedMetadata, sizeof(associated_encrypted_metadata_t));
+		en_encrypt_interval_metadata(&periodMetadataEncryptionKey, &intervalIdentifier, (unsigned char*)&bt_metadata, (unsigned char*)&encryptedMetadata, sizeof(associated_encrypted_metadata_t));
+		
 
 		// broadcast intervalIdentifier plus encryptedMetada according to specs
 		//printk("\n----------------------------------------\n\n");
