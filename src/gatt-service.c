@@ -88,6 +88,8 @@ static struct bt_uuid_128 infected_key_13_uuid = BT_UUID_INIT_128(
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+	BT_DATA_BYTES(BT_DATA_UUID16_ALL,
+								0x0a, 0x18),
 	/* My Service UUID (same as above) */
 	BT_DATA_BYTES(BT_DATA_UUID128_ALL,
 		0x06, 0x51, 0xC7, 0x9E, 0xAD, 0xA7, 0x42, 0xEA, 
