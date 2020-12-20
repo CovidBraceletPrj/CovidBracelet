@@ -1,0 +1,64 @@
+{
+    "_comment": {
+        "comment": [
+            "Add UUIDs for your services, characteristics, and descriptors in this file.",
+            "The format is the UUID of the item, followed by an object containing the data.",
+            "'name' is a mandatory handle, while 'format' is optional.",
+            "Currently the only supported format is 'TEXT', default is 'NO_FORMAT'.",
+            "The application must be reloaded to access changes in this file."
+        ]
+    },
+    "uuid16bitServiceDefinitions": {
+        "180D": {
+            "name": "Heart Rate"
+        }
+    },
+    "uuid16bitCharacteristicDefinitions": {
+        "2A37": {
+            "name": "Heart Rate Measurement"
+        },
+        "2A29": {
+            "name": "Manufacturer Name String",
+            "format": "TEXT"
+        },
+        "2A52": {
+            "name": "Record Access Control Point"
+        }
+    },
+    "uuid16bitDescriptorDefinitions": {},
+    "uuid128bitServiceDefinitions": {
+        "6E400001B5A3F393E0A9E50E24DCCA9E": {
+            "name": "UART over BLE"
+        },
+        "4BA23969090E42F08A89EAD187DE91D4": {
+    	    "name": "Wearable Exposure Notification Service"
+    	}
+    },
+    "uuid128bitCharacteristicDefinitions": {
+        "6E400002B5A3F393E0A9E50E24DCCA9E": {
+            "name": "UART RX"
+        },
+        "6E400003B5A3F393E0A9E50E24DCCA9E": {
+            "name": "UART TX"
+        },
+        "9B3C4906A2CA4AC6AF42B39246005055": {
+            "name": "ENS Log"
+        },
+        "671F1775DC3340E486B0B8D458C1C786": {
+            "name": "WEN Features"
+        },
+        "A16B5A931C154F4A81B83AE4BF5EF7CA": {
+            "name": "ENS Identifier"
+        },
+        "3D62B0B127D441D799EF865576A7F5C0": {
+            "name": "ENS Settings"
+        },
+        "F02355CBC8F9455796CB69B0CC0BBA43": {
+            "name": "Temporary Key List"
+        },
+        "A2E355F6504F4CF9A1109E373AE8A893": {
+            "name": "WEN Status"
+        }
+    },
+    "uuid128bitDescriptorDefinitions": {}
+}
