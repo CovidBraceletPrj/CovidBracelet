@@ -30,4 +30,5 @@ int init_storage(void) {
     if (rc) {
         return rc;
     }
+    return 0;
 }
