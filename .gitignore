@@ -45,3 +45,5 @@ massif-*
 /tags
 .pio
 .vscode
+
+.DS_Store
