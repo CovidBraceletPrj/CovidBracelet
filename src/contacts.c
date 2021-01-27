@@ -54,15 +54,6 @@ typedef struct contact {
 #endif
 
 
-typedef struct period_contact {
-    uint32_t duration;
-    uint16_t cnt;
-    int8_t max_rssi; //TODO also store avg rssi?
-    rolling_proximity_identifier_t rolling_proximity_identifier;
-    associated_encrypted_metadata_t associated_encrypted_metadata;
-} period_contact_t;
-
-
 typedef struct period_contacts{
     int cnt;
     period_contact_t period_contacts[MAX_PERIOD_CONTACTS];
