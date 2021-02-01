@@ -10,6 +10,8 @@
 
 // Maybe use this as param for init function
 #define SEC_COUNT 10
+#define PERIOD_COUNTER_ID 0
+#define PERIOD_OFFSET 1
 
 static struct nvs_fs fs;
 
@@ -31,4 +33,25 @@ int init_storage(void) {
         return rc;
     }
     return 0;
+}
+
+uint16_t get_current_period_nr() {
+    uint16_t period_nr;
+    int rc = nvs_read(&fs, PERIOD_COUNTER_ID, &period_nr, sizeof(period_nr));
+    // current period not found, store 0
+    if (rc <= 0) {
+        period_nr = 0;
+        nvs_write(&fs, PERIOD_COUNTER_ID, &period_nr, sizeof(period_nr));
+    }
+    return period_nr;
+}
+
+int store_period_contacts(period_contacts_t* contacts) {
+    uint16_t period = get_current_period_nr();
+    int rc = nvs_write(&fs, period * 2 + PERIOD_OFFSET, contacts->cnt, sizeof(contacts->cnt));
+    if (rc != sizeof(contacts->cnt)) {
+        return rc;
+    }
+    rc = nvs_write(&fs, period * 2 + 1 + PERIOD_OFFSET, contacts->period_contacts, sizeof(period_contact_t) * contacts->cnt);
+    return rc;
 }
