@@ -24,41 +24,6 @@
 #include "exposure-notification.h"
 #include "covid.h"
 
-typedef struct contact {
-    uint32_t most_recent_contact_time; //TODO: what is the correct type here?
-    uint32_t first_contact_time; //TODO: what is the correct type here?
-    uint16_t cnt;
-    int8_t max_rssi; 
-    rolling_proximity_identifier_t rolling_proximity_identifier;
-    associated_encrypted_metadata_t associated_encrypted_metadata;
-} contact_t;
-
-
-
-
-
-//short term contacts: number of people we meet in the 5 minute window. Records any contact, will later be checked whether this contact is longer than 5 minutes
-#ifndef MAX_CONTACTS
-#define MAX_CONTACTS 1000
-#endif
-
-
-//number of contact during on day. 
-#ifndef MAX_PERIOD_CONTACTS
-#define MAX_PERIOD_CONTACTS 400
-#endif
-
-//number of perdios (=days) we record data for
-#ifndef PERIODS
-#define PERIODS 14
-#endif
-
-
-typedef struct period_contacts{
-    int cnt;
-    period_contact_t period_contacts[MAX_PERIOD_CONTACTS];
-} period_contacts_t;
-
 static contact_t contacts[MAX_CONTACTS];
 static uint32_t contact_count = 0;
 
