@@ -46,12 +46,34 @@ uint16_t get_current_period_nr() {
     return period_nr;
 }
 
-int store_period_contacts(period_contacts_t* contacts) {
+int store_period_contacts(period_contacts_t contacts) {
     uint16_t period = get_current_period_nr();
-    int rc = nvs_write(&fs, period * 2 + PERIOD_OFFSET, contacts->cnt, sizeof(contacts->cnt));
-    if (rc != sizeof(contacts->cnt)) {
+    int rc = nvs_write(&fs, period * 2 + PERIOD_OFFSET, &contacts.cnt, sizeof(contacts.cnt));
+    if (rc <= 0) {
         return rc;
     }
-    rc = nvs_write(&fs, period * 2 + 1 + PERIOD_OFFSET, contacts->period_contacts, sizeof(period_contact_t) * contacts->cnt);
+    rc = nvs_write(&fs, period * 2 + 1 + PERIOD_OFFSET, &contacts.period_contacts,
+                   sizeof(period_contact_t) * contacts.cnt);
     return rc;
+}
+
+period_contacts_t get_contacts_for_period(uint16_t period) {
+    period_contacts_t contacts;
+    // Read the count of contacts in the requested period
+    int rc = nvs_read(&fs, period * 2 + PERIOD_OFFSET, &contacts.cnt, sizeof(contacts.cnt));
+    if (rc <= 0) {
+        // Error while reading count of contacts for requested period
+        printk("Period #%d not found. (err %d)", period, rc);
+        contacts.cnt = -1;
+    } else {
+        // Read the actual contacts for the requested period
+        rc = nvs_read(&fs, period * 2 + 1 + PERIOD_OFFSET, &contacts.period_contacts,
+                      sizeof(period_contact_t) * contacts.cnt);
+        if (rc <= 0) {
+            // Error while reading actual contacts for requested period
+            printk("Error while reading contacts for period #%d. (err %d)", period, rc);
+            contacts.cnt = -1;
+        }
+    }
+    return contacts;
 }
