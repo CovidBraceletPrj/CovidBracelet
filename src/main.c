@@ -17,11 +17,20 @@
 #include "gatt_service.h"
 #include "covid.h"
 #include "io.h"
+#include "display.h"
 
 void main(void)
 {
 	int err = 0;
 	printk("Starting Covid Contact Tracer\n");
+
+	err = platform_display_init();
+	if (err) {
+		printk("Failed to initialize display: %d\n", err);
+		return;
+	}
+
+	platform_display_set_brightness(0xff);
 
     // first init everything
 	// Use custom randomization as the mbdet_tls context initialization messes with the Zeyhr BLE stack.
