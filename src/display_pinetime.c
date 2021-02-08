@@ -94,16 +94,12 @@ void pinetime_display_set_brightness(const uint8_t brightness) {
 
 int pinetime_display_init() {
     int err;
-    uint8_t ppt;
-
+ 
     // Get display device
     pinetime_display.display_dev = device_get_binding("ST7789V");
     if (!pinetime_display.display_dev) {
         return -ENODEV;
     }
-
-    // Patch in gpio based backlight control
-//    ((struct display_driver_api *)pinetime_display.display_dev->api)->set_brightness = set_brightness;
 
     pinetime_display.backlight_dev = device_get_binding(BACKLIGHT_DEVNAME);
     if (!pinetime_display.backlight_dev) {
@@ -127,49 +123,26 @@ int pinetime_display_init() {
     }
     pinetime_display_set_brightness(0);
 
-/*
-    gpio_pin_set(backlight_dev, PIN, 1);
-
-    display_blanking_off(pinetime_display.display_dev);
-
-
-    err = cfb_framebuffer_init(pinetime_display.display_dev);
-    if (err) {
-        return err;
-    }
-
-    err = cfb_framebuffer_clear(pinetime_display.display_dev, false);
-    if (err) {
-        return err;
-    }
-
-    ppt = cfb_get_display_parameter(pinetime_display.display_dev, CFB_DISPLAY_PPT);
-
-    err = cfb_print(pinetime_display.display_dev, "Hello World", 0, 0);
-    if (err) {
-        return err;
-    }
-
-    err = cfb_framebuffer_finalize(pinetime_display.display_dev);
-    if (err) {
-        return err;
-    }
-    display_write(pinetime_display.display_dev, 0, 0, &buffer_desc, white_8x8);
-
-    display_blanking_off(pinetime_display.display_dev);
-*/
-
     // Set up graphics library
     // Populate all hardware callbacks with dummy functions, we do already have a driver
     u8x8_Setup(&u8x8, u8x8_cmd_cb, u8x8_dummy_cb, u8x8_dummy_cb, u8x8_dummy_cb);
     u8x8_InitDisplay(&u8x8);
     u8x8_ClearDisplay(&u8x8);
-    u8x8_SetPowerSave(&u8x8, false);
+    u8x8_SetPowerSave(&u8x8, true);
     u8x8_SetFont(&u8x8, u8x8_font_amstrad_cpc_extended_f);
-    u8x8_DrawString(&u8x8, 0, 0, "Hello World");
-    display_blanking_off(pinetime_display.display_dev);
 
     return 0;
+}
+
+void pinetime_display_draw_string(uint8_t x, uint8_t y, const char *str) {
+    u8x8_DrawString(&u8x8, x, y, str);
+}
+
+void pinetime_display_set_powersave(bool powersave) {
+    u8x8_SetPowerSave(&u8x8, false);
+    if (powersave) {
+        pinetime_display_set_brightness(0);
+    }
 }
 
 #endif
