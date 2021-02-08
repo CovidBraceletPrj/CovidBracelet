@@ -7,7 +7,7 @@
 
 #include <u8x8.h>
 
-#include "display.h"
+#include "display_pinetime.h"
 
 #define BACKLIGHT_LOW_OF_NODE DT_ALIAS(led0)
 #define BACKLIGHT_MID_OF_NODE DT_ALIAS(led1)

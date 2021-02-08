@@ -33,6 +33,7 @@ void main(void)
 	platform_display_set_powersave(false);
 	platform_display_set_brightness(0xff);
 	platform_display_draw_string(0, 0, "Hello World!");
+	platform_display_draw_string(0, DISPLAY_LINE_LAST_CONTACTS_START, "Seen identifiers:");
 
     // first init everything
 	// Use custom randomization as the mbdet_tls context initialization messes with the Zeyhr BLE stack.
