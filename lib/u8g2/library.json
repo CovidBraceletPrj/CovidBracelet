@@ -1,0 +1,10 @@
+{
+    "name": "u8g2-generic-c",
+    "version": "0.0.1",
+    "description": "Generic C build of U8g2",
+    "keywords": "Ooph",
+    "build": {
+        "srcDir": "u8g2/csrc",
+        "includeDir": "u8g2/csrc"
+    }
+}
