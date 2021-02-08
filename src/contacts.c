@@ -23,6 +23,7 @@
 #include "contacts.h"
 #include "exposure-notification.h"
 #include "covid.h"
+#include "display.h"
 
 typedef struct contact {
     uint32_t most_recent_contact_time; //TODO: what is the correct type here?
@@ -105,6 +106,8 @@ contact_t* find_contact(rolling_proximity_identifier_t* rpi, associated_encrypte
     return NULL;
 }
 
+#define NIBBLE_TO_HEX(x) (((x & 0xf) < 10) ? '0' + (x) : 'A' + (x) - 10)
+
 int check_add_contact(uint32_t contact_time, rolling_proximity_identifier_t* rpi, associated_encrypted_metadata_t* aem, int8_t rssi){
     contact_t* contact = find_contact(rpi, aem);
     if( contact == NULL ){
@@ -139,6 +142,25 @@ int check_add_contact(uint32_t contact_time, rolling_proximity_identifier_t* rpi
         // print_aem(aem);
         // printk(" rssi %i, cnt %i \n", rssi, contacts->cnt);
     }
+
+    for (int i = 0; i < 10; i++) {
+        char identifier_hex[COVID_ROLLING_PROXIMITY_IDENTIFIER_LEN * 2 + 1] = { 0 };
+        rolling_proximity_identifier_t *ident;
+
+        if (i >= contact_count) {
+            break;
+        }
+
+        ident = &contacts[contact_count - i - 1].rolling_proximity_identifier;
+
+        for (int j = 0; j < COVID_ROLLING_PROXIMITY_IDENTIFIER_LEN; j++) {
+            identifier_hex[j * 2]     = NIBBLE_TO_HEX(ident->data[j] & 0x0f);
+            identifier_hex[j * 2 + 1] = NIBBLE_TO_HEX(ident->data[j] >> 4);
+        }
+
+        platform_display_draw_string(0, DISPLAY_LINE_LAST_CONTACTS_START + i + 1, identifier_hex);
+    }
+
     return 0;
 }
 
