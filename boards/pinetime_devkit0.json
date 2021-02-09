@@ -5,7 +5,10 @@
     "f_cpu": "64000000L",
     "ldscript": "nrf52_xxaa.ld",
     "mcu": "nrf52832",
-    "variant": "pinetime_devkit0"
+    "variant": "pinetime_devkit0",
+    "zephyr": {
+      "cmake_extra_args": "-D CONF_FILE=configs/pinetime_devkit0.conf"
+    }
   },
   "connectivity": [
     "bluetooth"
