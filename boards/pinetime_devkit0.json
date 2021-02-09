@@ -1,0 +1,48 @@
+{
+  "build": {
+    "core": "nRF5",
+    "cpu": "cortex-m4",
+    "f_cpu": "64000000L",
+    "ldscript": "nrf52_xxaa.ld",
+    "mcu": "nrf52832",
+    "variant": "pinetime_devkit0"
+  },
+  "connectivity": [
+    "bluetooth"
+  ],
+  "debug": {
+    "tools": {
+      "jlink": {
+        "server": {
+          "package": "tool-openocd",
+          "executable": "bin/openocd",
+          "arguments": [
+            "-f", "scripts/interface/jlink.cfg",
+            "-c", "transport select swd",
+            "-f", "scripts/target/nrf52.cfg"
+          ]
+        },
+        "onboard": false
+      }
+    }
+  },
+  "frameworks": [
+    "arduino",
+	  "mbed",
+    "zephyr"
+  ],
+  "name": "Pine64 PineTime Devkit",
+  "upload": {
+    "maximum_ram_size": 65536,
+    "maximum_size": 524288,
+    "protocol": "jlink",
+    "protocols": [
+      "jlink",
+      "nrfjprog",
+      "stlink",
+      "blackmagic"
+    ]
+  },
+  "url": "https://pine64.com/product/pinetime-dev-kit/?v=0446c16e2e66",
+  "vendor": "Pine64"
+}
