@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Tobias Schramm <t.schramm@t-sys.eu>
+# Copyright (c) 2021, Tobias Schramm <t.schramm@t-sys.eu>
 # SPDX-License-Identifier: Apache-2.0
 
 description: |
@@ -15,3 +15,5 @@ properties:
       description: |
         Array containing pairs of state-of-charge and associated
         open circuit battery voltage in millivolts
+        Entries must be strictly monotonically decreasing in both
+        battery voltage and state-of-charge

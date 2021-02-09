@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) 2021 Tobias Schramm <t.schramm@t-sys.eu>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifdef PLATFORM_PINETIME
 
-#include <zephyr.h>
 #include <device.h>
 #include <display/cfb.h>
 #include <drivers/gpio.h>
