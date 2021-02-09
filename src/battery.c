@@ -54,7 +54,7 @@ int battery_update() {
     battery_adc_config.sequence.calibrate = false;
 
     val_mv = battery_adc_config.raw_value;
-    err = dc_raw_to_millivolts(adc_ref_internal(battery_adc_config.adc), BATTERY_ADC_GAIN, battery_adc_config.sequence.resolution, &val_mv);
+    err = adc_raw_to_millivolts(adc_ref_internal(battery_adc_config.adc), BATTERY_ADC_GAIN, battery_adc_config.sequence.resolution, &val_mv);
     if (err) {
         return err;
     }
