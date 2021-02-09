@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "battery.h"
+
+#ifdef BATTERY_SUPPORTED
+
 #include <device.h>
 #include <drivers/adc.h>
-
-#include "battery.h"
 
 #define VBATT DT_PATH(vbatt)
 #define BATTERY_ADC_GAIN ADC_GAIN_1_6
@@ -74,6 +76,9 @@ uint16_t battery_get_voltage_mv() {
     return battery_adc_config.value_mv;
 }
 
+#endif
+
+#ifdef BATTERY_SOC_SUPPORTED
 const uint32_t battery_soc_voltage_mv_pairs[] = DT_PROP(BATTERY, soc_voltage_mv);
 
 #if DT_PROP_LEN(BATTERY, soc_voltage_mv) % 2 != 0
@@ -114,3 +119,4 @@ uint32_t battery_voltage_mv_to_soc(uint16_t batt_mv) {
 
     return last_soc;
 }
+#endif
