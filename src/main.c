@@ -11,6 +11,7 @@
 #include <bluetooth/hci.h>
 #include <random/rand32.h>
 
+#include "battery.h"
 #include "exposure-notification.h"
 #include "covid_types.h"
 #include "contacts.h"
@@ -34,6 +35,20 @@ void main(void)
 	platform_display_set_brightness(0xff);
 	platform_display_draw_string(0, 0, "Hello World!");
 	platform_display_draw_string(0, DISPLAY_LINE_LAST_CONTACTS_START, "Seen identifiers:");
+
+	err = battery_init();
+	if (err) {
+		printk("Failed to initialize battery gauging: %d\n", err);
+		return;
+	}
+
+	err = battery_update();
+	if (err) {
+		printk("Failed to update battery voltage: %d\n", err);
+		return;
+	}
+
+	platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE, "Battery voltage:");
 
     // first init everything
 	// Use custom randomization as the mbdet_tls context initialization messes with the Zeyhr BLE stack.
@@ -72,7 +87,16 @@ void main(void)
 		return;
 	}
 
-	do{
+	do {
+		err = battery_update();
+		if (err) {
+			printk("Failed to update battery voltage: %d\n", err);
+		} else {
+			char voltage_mv[12] = { 0 };
+
+			snprintf(voltage_mv, sizeof(voltage_mv), "%04u mV", battery_get_voltage_mv());
+			platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 1, voltage_mv);
+		}
 		do_covid();
 		do_gatt();
 	} while (1);
