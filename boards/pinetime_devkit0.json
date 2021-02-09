@@ -22,7 +22,7 @@
             "-f", "scripts/target/nrf52.cfg"
           ]
         },
-        "onboard": false
+        "onboard": true
       }
     }
   },
