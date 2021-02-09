@@ -9,4 +9,11 @@
         output-ohms = <1000000>;
         full-ohms = <(1000000 + 1000000)>;
     };
+
+    battery {
+        compatible = "simple-battery";
+        /* state of charge, battery voltage mv pairs
+           eyeballed from various small LiPo datasheets */
+        soc-voltage-mv = <100 4200 80 3950 60 3800 40 3750 20 3700 0 3000>;
+    };
 };
