@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2021 Tobias Schramm <t.schramm@t-sys.eu>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <device.h>
 #include <drivers/adc.h>
 
