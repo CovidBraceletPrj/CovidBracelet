@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
+#include <stdio.h>
 #include <sys/printk.h>
 #include <bluetooth/hci.h>
 #include <random/rand32.h>
@@ -49,6 +49,7 @@ void main(void)
 	}
 
 	platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE, "Battery voltage:");
+	platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 2, "Battery SOC:");
 
     // first init everything
 	// Use custom randomization as the mbdet_tls context initialization messes with the Zeyhr BLE stack.
@@ -92,10 +93,13 @@ void main(void)
 		if (err) {
 			printk("Failed to update battery voltage: %d\n", err);
 		} else {
-			char voltage_mv[12] = { 0 };
+			char tmpstr[12] = { 0 };
 
-			snprintf(voltage_mv, sizeof(voltage_mv), "%04u mV", battery_get_voltage_mv());
-			platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 1, voltage_mv);
+			snprintf(tmpstr, sizeof(tmpstr), "%04u mV", battery_get_voltage_mv());
+			platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 1, tmpstr);
+
+			snprintf(tmpstr, sizeof(tmpstr), "%u%%", battery_voltage_mv_to_soc(battery_get_voltage_mv()));
+			platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 3, tmpstr);
 		}
 		do_covid();
 		do_gatt();

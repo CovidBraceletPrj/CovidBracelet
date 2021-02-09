@@ -5,6 +5,7 @@
 
 #define VBATT DT_PATH(vbatt)
 #define BATTERY_ADC_GAIN ADC_GAIN_1_6
+#define BATTERY DT_PATH(battery)
 
 static struct {
     const struct device *adc;
@@ -65,4 +66,45 @@ int battery_update() {
 
 uint16_t battery_get_voltage_mv() {
     return battery_adc_config.value_mv;
+}
+
+const uint32_t battery_soc_voltage_mv_pairs[] = DT_PROP(BATTERY, soc_voltage_mv);
+
+#if DT_PROP_LEN(BATTERY, soc_voltage_mv) % 2 != 0
+#error length of soc_voltage_mv must be divisible by two!
+#endif
+
+uint32_t battery_voltage_mv_to_soc(uint16_t batt_mv) {
+    int i = 0;
+    uint32_t last_soc;
+    uint32_t last_voltage_mv;
+
+    if (!ARRAY_SIZE(battery_soc_voltage_mv_pairs)) {
+        return 100;
+    }
+
+    last_soc = battery_soc_voltage_mv_pairs[0];
+    last_voltage_mv = battery_soc_voltage_mv_pairs[1];
+
+    if (batt_mv >= last_voltage_mv) {
+        return last_soc;
+    }
+
+    for (i = 1; i < ARRAY_SIZE(battery_soc_voltage_mv_pairs) / 2; i++) {
+        uint32_t soc = battery_soc_voltage_mv_pairs[i * 2];
+        uint32_t voltage_mv = battery_soc_voltage_mv_pairs[i * 2 + 1];
+
+        if (batt_mv >= voltage_mv && batt_mv <= last_voltage_mv) {
+            uint32_t delta_mv = last_voltage_mv - voltage_mv;
+            uint32_t delta_soc = last_soc - soc;
+            uint32_t frac_mv = batt_mv - voltage_mv;
+
+            return soc + frac_mv * delta_soc / delta_mv;
+        }
+
+        last_soc = soc;
+        last_voltage_mv = voltage_mv;
+    }
+
+    return last_soc;
 }
