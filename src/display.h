@@ -4,7 +4,8 @@
 #include <stdbool.h>
 
 #define DISPLAY_LINE_CURRENT_IDENTIFIER  0
-#define DISPLAY_LINE_LAST_CONTACTS_START 2
+#define DISPLAY_LINE_LAST_CONTACTS_START 5
+#define DISPLAY_LINE_BATTERY_VOLTAGE     20
 
 #ifdef PLATFORM_PINETIME
 #include "display_pinetime.h"
