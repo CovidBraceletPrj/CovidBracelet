@@ -93,6 +93,7 @@ void main(void)
 	}
 
 	do {
+#ifdef BATTERY_SUPPORTED
 		err = battery_update();
 		if (err) {
 			printk("Failed to update battery voltage: %d\n", err);
@@ -102,11 +103,12 @@ void main(void)
 			snprintf(tmpstr, sizeof(tmpstr), "%04u mV", battery_get_voltage_mv());
 			platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 1, tmpstr);
 
-#if defined(BATTERY_SUPPORTED) && defined(BATTERY_SOC_SUPPORTED)
+#ifdef BATTERY_SOC_SUPPORTED
 			snprintf(tmpstr, sizeof(tmpstr), "%3u%%", battery_voltage_mv_to_soc(battery_get_voltage_mv()));
 			platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 3, tmpstr);
-#endif
 		}
+#endif
+#endif
 		do_covid();
 		do_gatt();
 	} while (1);
