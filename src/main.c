@@ -98,7 +98,7 @@ void main(void)
 			snprintf(tmpstr, sizeof(tmpstr), "%04u mV", battery_get_voltage_mv());
 			platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 1, tmpstr);
 
-			snprintf(tmpstr, sizeof(tmpstr), "%u%%", battery_voltage_mv_to_soc(battery_get_voltage_mv()));
+			snprintf(tmpstr, sizeof(tmpstr), "% 3u%%", battery_voltage_mv_to_soc(battery_get_voltage_mv()));
 			platform_display_draw_string(0, DISPLAY_LINE_BATTERY_VOLTAGE + 3, tmpstr);
 		}
 		do_covid();
