@@ -30,6 +30,12 @@ void main(void) {
         return;
     }
 
+    err = init_contact_storage();
+    if (err) {
+        printk("init storage failed (err %d)\n", err);
+        return;
+    }
+
     printk("init contacts\n");
     init_contacts();
     err = init_io();
@@ -56,12 +62,6 @@ void main(void) {
     err = init_covid();
     if (err) {
         printk("init covid failed (err %d)\n", err);
-        return;
-    }
-
-    err = init_storage();
-    if (err) {
-        printk("init storage failed (err %d)\n", err);
         return;
     }
 

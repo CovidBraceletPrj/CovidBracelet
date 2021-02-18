@@ -23,12 +23,13 @@
 #include "contacts.h"
 #include "exposure-notification.h"
 #include "covid.h"
+#include "storage.h"
 
 static contact_t contacts[MAX_CONTACTS];
 static uint32_t contact_count = 0;
 
 static period_contacts_t period_contacts[PERIODS];
-static int period_index = 0;
+static int period_index;
 static int32_t next_infected_key_id = 0;
 
 void print_key(_ENBaseKey* key){
@@ -130,8 +131,17 @@ void key_change(int current_period_index){
             print_aem(&period_contacts[period_index].period_contacts[index].associated_encrypted_metadata);
             printk(" max rssi %i, cnt %u, duration %u\n", period_contacts[period_index].period_contacts[index].max_rssi, period_contacts[period_index].period_contacts[index].cnt, period_contacts[period_index].period_contacts[index].duration);
             period_contacts[period_index].cnt++;
+
+            printk("Attempting to store contact %i...\n", i);
+            int rc = add_contact(&contacts[i]);
+            if(rc) {
+                printk("Failed to store contact %i! (err %d)\n", i, rc);
+            } else {
+                printk("Successfully stored contact %i!\n", i);
+            }
         }
     }
+
     contact_count = 0;
 }
 
@@ -158,6 +168,8 @@ void key_change(int current_period_index){
 struct device *dev;
 
 void add_infected_key(period_t* period){
+
+    // TODO lome: Do we need it?
     
 	//printk("Interval: %u\n", period->periodInterval);
 	//printk("RPI: "); print_rpi((rolling_proximity_identifier_t*)&period->periodKey); printk("\n");
@@ -194,6 +206,8 @@ uint32_t get_next_infected_key_id(){
 void init_contacts(){
     contact_count = 0;
     period_index = 0;
+    // period_index = get_current_period_nr();
+    printk("Starting with period %d\n", period_index);
 
 	dev = device_get_binding(LED1);
 	if (dev == NULL) {
