@@ -10,7 +10,7 @@ typedef uint16_t storage_id_t;
 
 typedef struct stored_contacts_information {
     record_sequence_number_t oldest_contact;
-    record_sequence_number_t latest_contact;
+    record_sequence_number_t count;
 } stored_contacts_information_t;
 
 /**
@@ -18,13 +18,6 @@ typedef struct stored_contacts_information {
  * @return 0 for success
  */
 int init_contact_storage();
-
-/**
- * Checks if a contact is available with number sn
- * @param sn
- * @return 1 if available, 0 otherwise or in case of an error
- */
-int has_contact(record_sequence_number_t sn);
 
 /**
  * Loads the contact with number sn into the destination struct

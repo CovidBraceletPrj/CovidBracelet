@@ -9,11 +9,12 @@
 #include "storage.h"
 
 // Maybe use this as param for init function
-#define SEC_COUNT 10U
+#define SEC_COUNT 8U
 
 #define STORED_CONTACTS_INFO_ID 0
 #define CONTACTS_OFFSET 1
 #define MAX_CONTACTS 65535
+#define ADDRESS_ID 1
 
 static struct nvs_fs fs;
 
@@ -25,8 +26,7 @@ inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
 }
 
 void increase_sn_counter() {
-    contact_information.latest_contact++;
-    if (contact_information.latest_contact - contact_information.oldest_contact >= MAX_CONTACTS ) {
+    if (contact_information.count >= MAX_CONTACTS ) {
         contact_information.oldest_contact++;
     }
 }
@@ -41,21 +41,23 @@ int init_contact_storage(void) {
     if (rc) {
         return rc;
     }
-    fs.sector_size = info.size * 4;
+    fs.sector_size = info.size;
     fs.sector_count = SEC_COUNT;
 
     rc = nvs_init(&fs, DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
+
+    // char buf[16];
+    // rc = nvs_read(&fs, ADDRESS_ID, &buf, sizeof(buf));
+    // if (rc > 0) { /* item was found, show it */
+    //     printk("Id: %d, Address: %s\n", ADDRESS_ID, buf);
+    // } else { /* item was not found, add it */
+    //     strcpy(buf, "192.168.1.1");
+    //     printk("No address found, adding %s at id %d\n", buf, ADDRESS_ID);
+    //     (void)nvs_write(&fs, ADDRESS_ID, &buf, strlen(buf) + 1);
+    // }
     return rc;
 }
 
-int has_contact(record_sequence_number_t sn) {
-    // Treat case of wrap-around and non-wrap-around different
-    if (contact_information.oldest_contact <= contact_information.latest_contact) {
-        return sn >= contact_information.oldest_contact && sn <= contact_information.latest_contact;
-    } else {
-        return sn <= contact_information.oldest_contact || sn >= contact_information.latest_contact;
-    }
-}
 
 int load_contact(contact_t* dest, record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
@@ -70,8 +72,6 @@ int add_contact(contact_t* src) {
     record_sequence_number_t curr_sn = get_latest_sequence_number() + 1;
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
-    contact_t test;
-    nvs_read(&fs, id, &test, sizeof(test));
     int rc = nvs_write(&fs, id, src, sizeof(*src));
     if (rc > 0) {
         increase_sn_counter();
@@ -80,13 +80,14 @@ int add_contact(contact_t* src) {
     return rc;
 }
 
+// TODO handle start and end
 int delete_contact(record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
     return nvs_delete(&fs, id);
 }
 
 record_sequence_number_t get_latest_sequence_number() {
-    return contact_information.latest_contact;
+    return contact_information.oldest_contact + contact_information.count;
 }
 
 record_sequence_number_t get_oldest_sequence_number() {
@@ -94,5 +95,5 @@ record_sequence_number_t get_oldest_sequence_number() {
 }
 
 uint32_t get_num_contacts() {
-    return get_latest_sequence_number() - get_oldest_sequence_number();
+    return contact_information.count;
 }
