@@ -25,9 +25,9 @@ inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
     return (storage_id_t)(sn % MAX_CONTACTS) + CONTACTS_OFFSET;
 }
 
-void increase_sn_counter() {
-    if (contact_information.count >= MAX_CONTACTS ) {
-        contact_information.oldest_contact++;
+void increment_storaed_contact_counter() {
+    if (contact_information.count >= MAX_CONTACTS) {
+        contact_information.oldest_contact = sequence_number_increment(contact_information.oldest_contact);
     }
 }
 
@@ -45,24 +45,14 @@ int init_contact_storage(void) {
     fs.sector_count = SEC_COUNT;
 
     rc = nvs_init(&fs, DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
-
-    // char buf[16];
-    // rc = nvs_read(&fs, ADDRESS_ID, &buf, sizeof(buf));
-    // if (rc > 0) { /* item was found, show it */
-    //     printk("Id: %d, Address: %s\n", ADDRESS_ID, buf);
-    // } else { /* item was not found, add it */
-    //     strcpy(buf, "192.168.1.1");
-    //     printk("No address found, adding %s at id %d\n", buf, ADDRESS_ID);
-    //     (void)nvs_write(&fs, ADDRESS_ID, &buf, strlen(buf) + 1);
-    // }
+    
     return rc;
 }
-
 
 int load_contact(contact_t* dest, record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
     int rc = nvs_read(&fs, id, dest, sizeof(*dest));
-    if(rc <= 0) {
+    if (rc <= 0) {
         return rc;
     }
     return 0;
@@ -74,7 +64,7 @@ int add_contact(contact_t* src) {
 
     int rc = nvs_write(&fs, id, src, sizeof(*src));
     if (rc > 0) {
-        increase_sn_counter();
+        increment_storaed_contact_counter();
         return 0;
     }
     return rc;
