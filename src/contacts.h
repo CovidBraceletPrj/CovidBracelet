@@ -45,7 +45,7 @@ typedef struct contact {
     uint32_t most_recent_contact_time;  //TODO: what is the correct type here?
     uint32_t first_contact_time;        //TODO: what is the correct type here?
     uint16_t cnt;
-    int8_t max_rssi;
+    rssi_t max_rssi;
     rolling_proximity_identifier_t rolling_proximity_identifier;
     associated_encrypted_metadata_t associated_encrypted_metadata;
 } contact_t;

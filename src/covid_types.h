@@ -28,4 +28,6 @@ typedef struct associated_encrypted_metadata {
     uint8_t data[sizeof(bt_metadata_t)]; 
 } __packed associated_encrypted_metadata_t;
 
+typedef uint8_t rssi_t;
+
 #endif

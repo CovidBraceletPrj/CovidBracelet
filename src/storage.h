@@ -2,9 +2,7 @@
 #define CONTACT_STORAGE_H
 
 #include "contacts.h"  // Requires contact_t in contacts.h!
-
-// TODO: This should be masked to k=24 bits
-typedef uint32_t record_sequence_number_t;
+#include "sequencenumber.h"
 
 typedef uint16_t storage_id_t;
 
