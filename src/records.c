@@ -6,7 +6,6 @@
 int ens_records_iterator_init_range(record_iterator_t* iterator,
                                     record_sequence_number_t* opt_start,
                                     record_sequence_number_t* opt_end) {
-    // TODO: if start or end is null, use currently available numbers
     iterator->sn_next = opt_start ? *opt_start : get_oldest_sequence_number();
     iterator->sn_end = opt_end ? *opt_end : get_latest_sequence_number();
     if (get_num_contacts() == 0) {
