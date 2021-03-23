@@ -36,7 +36,6 @@ void main(void) {
         return;
     }
 
-    printk("init contacts\n");
     init_contacts();
     err = init_io();
     if (err) {
