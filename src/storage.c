@@ -6,8 +6,8 @@
 #include <string.h>
 #include <zephyr.h>
 
-#include "storage.h"
 #include "sequencenumber.h"
+#include "storage.h"
 
 // Maybe use this as param for init function
 #define SEC_COUNT 8U
@@ -19,15 +19,11 @@
 static struct nvs_fs fs;
 
 // Information about currently stored contacts
-static stored_contacts_information_t contact_information = {
-    .oldest_contact = 0,
-    .count = 0 
-};
+static stored_contacts_information_t contact_information = {.oldest_contact = 0, .count = 0};
 
 inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
     return (storage_id_t)(sn % MAX_CONTACTS) + CONTACTS_OFFSET;
 }
-
 
 /**
  * Load our initial storage information from flash.
@@ -36,11 +32,11 @@ int load_storage_information() {
     size_t size = sizeof(contact_information);
     int rc = nvs_read(&fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
 
-    // Check, if read what we wanted 
-    if(rc != size) {
+    // Check, if read what we wanted
+    if (rc != size) {
         // Write our initial data to storage
         rc = nvs_write(&fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
-        if(rc <= 0) {
+        if (rc <= 0) {
             return rc;
         }
     }
@@ -52,8 +48,7 @@ int load_storage_information() {
  */
 int save_storage_information() {
     int rc = nvs_write(&fs, STORED_CONTACTS_INFO_ID, &contact_information, sizeof(contact_information));
-
-    if(rc <= 0) {
+    if (rc <= 0) {
         printk("Something went wrong after saving storage information.\n");
     }
 }
@@ -82,7 +77,7 @@ int init_contact_storage(void) {
     fs.sector_count = SEC_COUNT;
 
     rc = nvs_init(&fs, DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
-    if(rc) {
+    if (rc) {
         // Error during nvs_init
         return rc;
     }
@@ -120,7 +115,16 @@ int add_contact(contact_t* src) {
 // TODO lome: do we need this?
 int delete_contact(record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
-    return nvs_delete(&fs, id);
+    int rc = nvs_delete(&fs, id);
+    if (!rc) {
+        // TODO lome: what happens, if contacts in the middle are deleted?
+        contact_information.count--;
+        if (sn_equal(sn, get_oldest_sequence_number())) {
+            contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
+        }
+        save_storage_information();
+    }
+    return rc;
 }
 
 record_sequence_number_t get_latest_sequence_number() {
