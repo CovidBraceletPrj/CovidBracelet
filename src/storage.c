@@ -60,7 +60,7 @@ int save_storage_information() {
 
 void increment_stored_contact_counter() {
     if (contact_information.count >= MAX_CONTACTS) {
-        contact_information.oldest_contact = sequence_number_increment(contact_information.oldest_contact);
+        contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
     } else {
         contact_information.count++;
     }
@@ -105,7 +105,7 @@ int load_contact(contact_t* dest, record_sequence_number_t sn) {
 }
 
 int add_contact(contact_t* src) {
-    record_sequence_number_t curr_sn = sequence_number_increment(get_latest_sequence_number());
+    record_sequence_number_t curr_sn = sn_increment(get_latest_sequence_number());
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
     int rc = nvs_write(&fs, id, src, sizeof(*src));
