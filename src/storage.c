@@ -28,14 +28,9 @@ inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
     return (storage_id_t)(sn % MAX_CONTACTS) + CONTACTS_OFFSET;
 }
 
-void increment_storaed_contact_counter() {
-    if (contact_information.count >= MAX_CONTACTS) {
-        contact_information.oldest_contact = sequence_number_increment(contact_information.oldest_contact);
-    }
-}
 
 /**
- * Load our initial storage information from storage.
+ * Load our initial storage information from flash.
  */
 int load_storage_information() {
     size_t size = sizeof(contact_information);
@@ -50,6 +45,26 @@ int load_storage_information() {
         }
     }
     return 0;
+}
+
+/**
+ * Save our current storage infromation to flash.
+ */
+int save_storage_information() {
+    int rc = nvs_write(&fs, STORED_CONTACTS_INFO_ID, &contact_information, sizeof(contact_information));
+
+    if(rc <= 0) {
+        printk("Something went wrong after saving storage information.\n");
+    }
+}
+
+void increment_stored_contact_counter() {
+    if (contact_information.count >= MAX_CONTACTS) {
+        contact_information.oldest_contact = sequence_number_increment(contact_information.oldest_contact);
+    } else {
+        contact_information.count++;
+    }
+    save_storage_information();
 }
 
 int init_contact_storage(void) {
@@ -90,12 +105,12 @@ int load_contact(contact_t* dest, record_sequence_number_t sn) {
 }
 
 int add_contact(contact_t* src) {
-    record_sequence_number_t curr_sn = get_latest_sequence_number() + 1;
+    record_sequence_number_t curr_sn = sequence_number_increment(get_latest_sequence_number());
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
     int rc = nvs_write(&fs, id, src, sizeof(*src));
     if (rc > 0) {
-        increment_storaed_contact_counter();
+        increment_stored_contact_counter();
         return 0;
     }
     return rc;
