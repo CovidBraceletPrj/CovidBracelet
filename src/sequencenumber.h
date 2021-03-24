@@ -24,7 +24,7 @@ record_sequence_number_t sn_mask(record_sequence_number_t sn);
  * @param b second sequence number
  * @return 1, if sequence numbers are equal, 0 otherwise.
  */
-int sequence_number_eq(record_sequence_number_t a, record_sequence_number_t b);
+int sn_equal(record_sequence_number_t a, record_sequence_number_t b);
 
 /**
  * Increment the given sequence number. Wraps around, if 2^24 is reached.
@@ -32,5 +32,5 @@ int sequence_number_eq(record_sequence_number_t a, record_sequence_number_t b);
  * @param sn sequence number to increment
  * @return the incremented sequenced number
  */
-record_sequence_number_t sequence_number_increment(record_sequence_number_t sn);
+record_sequence_number_t sn_increment(record_sequence_number_t sn);
 #endif

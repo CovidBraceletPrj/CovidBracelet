@@ -37,11 +37,11 @@ record_t* ens_records_iterator_next(record_iterator_t* iter) {
             // TODO lome: timestamp?
         }
 
-        if (sequence_number_eq(iter->sn_next, iter->sn_end)) {
+        if (sn_equal(iter->sn_next, iter->sn_end)) {
             iter->finished = true;  // this iterator will finish after this execution
         } else {
             // increase the current sn
-            iter->sn_next = sequence_number_increment(iter->sn_next);
+            iter->sn_next = sn_increment(iter->sn_next);
         }
     }
 
