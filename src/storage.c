@@ -9,6 +9,20 @@
 #include "sequencenumber.h"
 #include "storage.h"
 
+
+// Get external flash device
+#if (CONFIG_SPI_NOR - 0) ||				\
+	DT_NODE_HAS_STATUS(DT_INST(0, jedec_spi_nor), okay)
+#define FLASH_DEVICE DT_LABEL(DT_INST(0, jedec_spi_nor))
+#define FLASH_NAME "JEDEC SPI-NOR"
+#elif (CONFIG_NORDIC_QSPI_NOR - 0) || \
+	DT_NODE_HAS_STATUS(DT_INST(0, nordic_qspi_nor), okay)
+#define FLASH_DEVICE DT_LABEL(DT_INST(0, nordic_qspi_nor))
+#define FLASH_NAME "JEDEC QSPI-NOR"
+#else
+#error Unsupported flash driver
+#endif
+
 // Maybe use this as param for init function
 #define SEC_COUNT 8U
 
@@ -67,7 +81,7 @@ int init_contact_storage(void) {
     struct flash_pages_info info;
     // define the nvs file system
     fs.offset = FLASH_AREA_OFFSET(storage);
-    rc = flash_get_page_info_by_offs(device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL), fs.offset, &info);
+    rc = flash_get_page_info_by_offs(device_get_binding(FLASH_DEVICE), fs.offset, &info);
 
     if (rc) {
         // Error during retrieval of page information
@@ -76,7 +90,7 @@ int init_contact_storage(void) {
     fs.sector_size = info.size;
     fs.sector_count = SEC_COUNT;
 
-    rc = nvs_init(&fs, DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
+    rc = nvs_init(&fs, FLASH_DEVICE);
     if (rc) {
         // Error during nvs_init
         return rc;
@@ -86,6 +100,7 @@ int init_contact_storage(void) {
     rc = load_storage_information();
 
     printk("Currently %d contacts stored!\n", contact_information.count);
+    printk("Space available: %d\n", FLASH_AREA_SIZE(storage));
 
     return rc;
 }
@@ -112,12 +127,12 @@ int add_contact(contact_t* src) {
 }
 
 // TODO handle start and end
-// TODO lome: do we need this?
 int delete_contact(record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
     int rc = nvs_delete(&fs, id);
     if (!rc) {
         // TODO lome: what happens, if contacts in the middle are deleted?
+        // Magic
         contact_information.count--;
         if (sn_equal(sn, get_oldest_sequence_number())) {
             contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
