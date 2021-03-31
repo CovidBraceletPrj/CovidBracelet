@@ -32,6 +32,9 @@
 
 static struct nvs_fs fs;
 
+struct k_mutex fs_mutex;
+
+
 // Information about currently stored contacts
 static stored_contacts_information_t contact_information = {.oldest_contact = 0, .count = 0};
 
@@ -77,10 +80,12 @@ void increment_stored_contact_counter() {
 }
 
 int init_contact_storage(void) {
+    k_mutex_init(&fs_mutex);
     int rc = 0;
     struct flash_pages_info info;
     // define the nvs file system
     fs.offset = FLASH_AREA_OFFSET(storage);
+    fs.nvs_lock = fs_mutex;
     rc = flash_get_page_info_by_offs(device_get_binding(FLASH_DEVICE), fs.offset, &info);
 
     if (rc) {
