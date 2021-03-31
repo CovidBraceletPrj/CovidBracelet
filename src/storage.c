@@ -9,14 +9,11 @@
 #include "sequencenumber.h"
 #include "storage.h"
 
-
 // Get external flash device
-#if (CONFIG_SPI_NOR - 0) ||				\
-	DT_NODE_HAS_STATUS(DT_INST(0, jedec_spi_nor), okay)
+#if (CONFIG_SPI_NOR - 0) || DT_NODE_HAS_STATUS(DT_INST(0, jedec_spi_nor), okay)
 #define FLASH_DEVICE DT_LABEL(DT_INST(0, jedec_spi_nor))
 #define FLASH_NAME "JEDEC SPI-NOR"
-#elif (CONFIG_NORDIC_QSPI_NOR - 0) || \
-	DT_NODE_HAS_STATUS(DT_INST(0, nordic_qspi_nor), okay)
+#elif (CONFIG_NORDIC_QSPI_NOR - 0) || DT_NODE_HAS_STATUS(DT_INST(0, nordic_qspi_nor), okay)
 #define FLASH_DEVICE DT_LABEL(DT_INST(0, nordic_qspi_nor))
 #define FLASH_NAME "JEDEC QSPI-NOR"
 #else
@@ -33,7 +30,6 @@
 static struct nvs_fs fs;
 
 struct k_mutex fs_mutex;
-
 
 // Information about currently stored contacts
 static stored_contacts_information_t contact_information = {.oldest_contact = 0, .count = 0};
@@ -68,15 +64,17 @@ int save_storage_information() {
     if (rc <= 0) {
         printk("Something went wrong after saving storage information.\n");
     }
+    return rc;
 }
 
-void increment_stored_contact_counter() {
+record_sequence_number_t get_next_sequence_number() {
     if (contact_information.count >= MAX_CONTACTS) {
         contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
     } else {
         contact_information.count++;
     }
     save_storage_information();
+    return get_latest_sequence_number();
 }
 
 int init_contact_storage(void) {
@@ -120,12 +118,11 @@ int load_contact(contact_t* dest, record_sequence_number_t sn) {
 }
 
 int add_contact(contact_t* src) {
-    record_sequence_number_t curr_sn = sn_increment(get_latest_sequence_number());
+    record_sequence_number_t curr_sn = get_next_sequence_number();
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
     int rc = nvs_write(&fs, id, src, sizeof(*src));
     if (rc > 0) {
-        increment_stored_contact_counter();
         return 0;
     }
     return rc;
@@ -136,11 +133,11 @@ int delete_contact(record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
     int rc = nvs_delete(&fs, id);
     if (!rc) {
-        // TODO lome: what happens, if contacts in the middle are deleted?
-        // Magic
-        contact_information.count--;
-        if (sn_equal(sn, get_oldest_sequence_number())) {
+        if (sn_equal(sn, get_latest_sequence_number())) {
+            contact_information.count--;
+        } else if (sn_equal(sn, get_oldest_sequence_number())) {
             contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
+            contact_information.count--;
         }
         save_storage_information();
     }
