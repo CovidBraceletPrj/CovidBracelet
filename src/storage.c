@@ -24,7 +24,7 @@
 #endif
 
 // Maybe use this as param for init function
-#define SEC_COUNT 8U
+#define SEC_COUNT 192U
 
 #define STORED_CONTACTS_INFO_ID 0
 #define CONTACTS_OFFSET 1
@@ -87,7 +87,7 @@ int init_contact_storage(void) {
         // Error during retrieval of page information
         return rc;
     }
-    fs.sector_size = info.size;
+    fs.sector_size = info.size * 4;
     fs.sector_count = SEC_COUNT;
 
     rc = nvs_init(&fs, FLASH_DEVICE);
