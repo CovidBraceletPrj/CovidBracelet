@@ -1,6 +1,7 @@
 #include <device.h>
 #include <drivers/flash.h>
 #include <fs/nvs.h>
+#include <logging/log.h>
 #include <power/reboot.h>
 #include <storage/flash_map.h>
 #include <string.h>
@@ -17,6 +18,8 @@
 #define MAX_CONTACTS 65536
 
 static struct nvs_fs info_fs;
+
+static ens_fs_t ens_fs;
 
 // Information about currently stored contacts
 static stored_contacts_information_t contact_information = {.oldest_contact = 0, .count = 0};
@@ -73,6 +76,7 @@ int init_contact_storage(void) {
 
     if (rc) {
         // Error during retrieval of page information
+        printk("Cannot retrieve page information (err %d)\n", rc);
         return rc;
     }
     info_fs.sector_size = info.size;
@@ -81,15 +85,24 @@ int init_contact_storage(void) {
     rc = nvs_init(&info_fs, DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
     if (rc) {
         // Error during nvs_init
+        printk("Cannot init NVS (err %d)\n", rc);
         return rc;
     }
 
     // Load the current storage information
     rc = load_storage_information();
+    if (rc) {
+        printk("Cannot load storage information (err %d)\n", rc);
+        return rc;
+    }
 
     printk("Currently %d contacts stored!\n", contact_information.count);
     printk("Space available: %d\n", FLASH_AREA_SIZE(storage));
 
+    rc = ens_fs_init(&ens_fs, FLASH_AREA_ID(ens_storage), 32);
+    if(rc) {
+        printk("Cannot init ens_fs (err %d)\n", rc);
+    }
     return rc;
 }
 
