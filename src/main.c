@@ -29,12 +29,11 @@ void main(void) {
         return;
     }
 
-    // TODO lome: Cleanup storage
-    // err = init_contact_storage();
-    // if (err) {
-    //     printk("init storage failed (err %d)\n", err);
-    //     return;
-    // }
+    err = init_contact_storage();
+    if (err) {
+        printk("init storage failed (err %d)\n", err);
+        return;
+    }
 
     init_contacts();
     err = init_io();
