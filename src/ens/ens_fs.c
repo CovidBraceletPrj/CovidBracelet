@@ -1,7 +1,10 @@
 #include <drivers/flash.h>
 #include <storage/flash_map.h>
+#include <sys/crc.h>
 
 #include "ens_fs.h"
+
+#define SEED 42
 
 int ens_fs_init(ens_fs_t* fs, uint8_t id, uint64_t entry_size) {
     int rc = flash_area_open(id, &fs->area);
@@ -36,9 +39,11 @@ end:
 
 int ens_fs_write(ens_fs_t* fs, uint64_t id, void* data) {
 
-    uint64_t offset = id * fs->entry_size;
+    // Set CRC and not-deleted-flag
+    uint8_t* obj = data;
+    obj[fs->entry_size - 1] = crc7_be(SEED, obj, fs->entry_size - 1) | 1;
 
-    // TODO lome: set CRC
+    uint64_t offset = id * fs->entry_size;
     int rc = flash_area_write(fs->area, offset, data, fs->entry_size);
     if(rc) {
         goto end;
@@ -49,7 +54,15 @@ end:
 }
 
 int ens_fs_delete(ens_fs_t* fs, uint64_t id) {
-    // TODO lome: Overwrite deleted flag.
+
+    // TODO lome: Maybe overwrite last 4 bytes? Or make it file system dependend?    
+    // uint8_t data = 0;
+    // uint64_t offset = (id + 1) * fs->entry_size - 1;
+
+    // int rc = flash_area_write(fs->area, offset, &data, 0);
+    // if(rc) {
+    //     goto end;
+    // }
     return 0;
 }
 
