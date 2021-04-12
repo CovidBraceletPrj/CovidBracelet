@@ -23,7 +23,7 @@
 #include "contacts.h"
 #include "exposure-notification.h"
 #include "covid.h"
-#include "storage.h"
+#include "ens/storage.h"
 
 static contact_t contacts[MAX_CONTACTS];
 static uint32_t contact_count = 0;

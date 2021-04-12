@@ -1,0 +1,219 @@
+
+    // ens_fs_t fs;
+    // int rc = ens_fs_init(&fs, FLASH_AREA_ID(storage), sizeof(uint32_t));
+    // if(rc) {
+    //     printk("FS init err %d\n", rc);
+    // }
+
+    // printk("Size: %d\n", fs.area->fa_size);
+
+    // rc = ens_fs_page_erase(&fs, 0, 1);
+    // if(rc) {
+    //     printk("Erase err %d\n", rc);
+    // }
+
+    // uint32_t test;
+    // rc = ens_fs_read(&fs, 0, &test);
+    // if(rc) {
+    //     printk("1 read error %d\n", rc);
+    // }
+    // printk("test: %ul\n", test);
+
+    // test = 6;
+    // rc = ens_fs_write(&fs, 0, &test);
+    // if(rc) {
+    //     printk("1 write error %d\n", rc);
+    // }
+
+    // rc = ens_fs_read(&fs, 0, &test);
+    // if(rc) {
+    //     printk("2 read error %d\n", rc);
+    // }
+    // printk("test: %ul\n", test);
+
+    // test = 5;
+    // rc = ens_fs_write(&fs, 0, &test);
+    // if(rc) {
+    //     printk("2 write error %d\n", rc);
+    // }
+
+    // rc = ens_fs_read(&fs, 0, &test);
+    // if(rc) {
+    //     printk("3 read error %d\n", rc);
+    // }
+    // printk("test: %ul\n", test);
+
+
+    // printf("\n" FLASH_NAME " SPI flash testing\n");
+    // printf("==========================\n");
+
+    
+    // const struct device* flash_dev = device_get_binding(FLASH_DEVICE);
+
+    // if (!flash_dev) {
+    //     printf("SPI flash driver %s was not found!\n", FLASH_DEVICE);
+    //     return;
+    // }
+
+    // /* Write protection needs to be disabled before each write or
+    //  * erase, since the flash component turns on write protection
+    //  * automatically after completion of write and erase
+    //  * operations.
+    //  */
+    // // printf("\nTest 1: Flash erase\n");
+    // // flash_write_protection_set(flash_dev, false);
+
+    // // rc = flash_erase(flash_dev, FLASH_TEST_REGION_OFFSET, FLASH_SECTOR_SIZE);
+    // // if (rc != 0) {
+    // //     printf("Flash erase failed! %d\n", rc);
+    // // } else {
+    // //     printf("Flash erase succeeded!\n");
+    // // }
+
+    // printf("\nTest 2: Flash write\n");
+
+    // printk("pages: %d\n", flash_get_page_count(flash_dev));
+    // uint32_t offset = FLASH_AREA_OFFSET(storage);
+    // struct flash_pages_info info;
+    // flash_get_page_info_by_offs(flash_dev, offset, &info);
+
+    // printk("page_size: %d\n", info.size);
+
+    // flash_write_protection_set(flash_dev, false);
+    // if(flash_erase(flash_dev, offset, info.size)) {
+    //     printk("erase err\n");
+    // }
+
+    // uint8_t test;
+    // flash_read(flash_dev, offset, &test, sizeof(test));
+    // printk("Test: %u\n", test);
+
+    // test = 6;
+    // flash_write_protection_set(flash_dev, false);
+    // flash_write(flash_dev, offset, &test, sizeof(test));
+    // flash_read(flash_dev, offset, &test, sizeof(test));
+    // printk("Test: %u\n", test);
+
+    // test = 5;
+    // flash_write_protection_set(flash_dev, false);
+    // flash_write(flash_dev, offset, &test, sizeof(test));
+    // flash_read(flash_dev, offset, &test, sizeof(test));
+    // printk("Test: %u\n", test);
+
+    // uint32_t start_time = k_cycle_get_32();
+    // for(int i = 0; i < 100; i++) {
+    //     contact_t contact;
+    //     contact.cnt = i;
+    //     flash_write_protection_set(flash_dev, false);
+    //     if(flash_write(flash_dev, offset + i * 32, &contact, sizeof(contact))) {
+    //         printk("write err\n");
+    //     }
+    //     // if(flash_read(flash_dev, offset + i * 32, &contact, sizeof(contact))) {
+    //     //     printk("read err\n");
+    //     // }
+    //     // printk("round: %d, contact: %d, len: %d\n", i, contact.cnt, sizeof(contact));
+    // }
+
+    // uint64_t nanoseconds_spent = k_cyc_to_ms_floor64(k_cycle_get_32() - start_time);
+    // printk("adding 100 contacts %llu ms\n", nanoseconds_spent);
+    // printk("average: %llu\n", nanoseconds_spent / 100);
+
+    // start_time = k_cycle_get_32();
+    // for(int i = 0; i < 100; i++) {
+    //     contact_t contact;
+    //     if(flash_read(flash_dev, offset + i * 32, &contact, sizeof(contact))) {
+    //         printk("read err\n");
+    //     }
+    //     if(contact.cnt != i) {
+    //         printk("Expected does not match!\n");
+    //     }
+    //     // printk("round: %d, contact: %d, len: %d\n", i, contact.cnt, sizeof(contact));
+    // }
+
+    // nanoseconds_spent = k_cyc_to_ms_floor64(k_cycle_get_32() - start_time);
+    // printk("loading 100 contacts %llu ms\n", nanoseconds_spent);
+    // printk("average: %llu\n", nanoseconds_spent / 100);
+
+
+    // for(int i = 0; i < 100; i++) {
+    //     memset(&expected, 0, len);
+    //     expected.cnt = i;
+    //     flash_write_protection_set(flash_dev, false);
+    //     rc = flash_erase(flash_dev, FLASH_TEST_REGION_OFFSET, len);
+    //     if (rc != 0) {
+    //         printf("Flash erase failed! %d\n", rc);
+    //     } else {
+    //         printf("Flash erase succeeded!\n");
+    //     }
+    //     flash_write_protection_set(flash_dev, false);
+    //     rc = flash_write(flash_dev, FLASH_TEST_REGION_OFFSET, &expected, len);
+    //     if (rc != 0) {
+    //         printf("Flash write failed! %d\n", rc);
+    //         return;
+    //     }
+
+    //     memset(&buf, 0, len);
+    //     rc = flash_read(flash_dev, FLASH_TEST_REGION_OFFSET, &buf, len);
+    //     if (rc != 0) {
+    //         printf("Flash read failed! %d\n", rc);
+    //         return;
+    //     }
+
+    //     if (memcmp(&expected, &buf, len) == 0) {
+    //         printf("Data read matches data written. Good!!\n");
+    //     } else {
+    //         // const uint8_t* wp = &expected;
+    //         // const uint8_t* rp = &buf;
+    //         // const uint8_t* rpe = rp + len;
+
+    //         printf("Data read does not match data written!!\n");
+    //         // while (rp < rpe) {
+    //         //     printf("%08x wrote %02x read %02x %s\n", (uint32_t)(FLASH_TEST_REGION_OFFSET + (rp - buf)), *wp, *rp,
+    //         //         (*rp == *wp) ? "match" : "MISMATCH");
+    //         //     ++rp;
+    //         //     ++wp;
+    //         // }
+    //     } 
+    // }
+
+    // const struct flash_area *area;
+    // err = flash_area_open(FLASH_AREA_ID(storage), &area);
+    // if(err) {
+    //     printk("Error during flash_area_open (err %d)\n", err);
+    // }
+    // const struct device* dev = device_get_binding(area->fa_dev_name);
+
+    // printk("write block size: %d\n", flash_get_write_block_size(dev));
+
+    // uint32_t start_time = k_cycle_get_32();
+    // uint32_t test;
+    // for(int i = 0; i < 100; i++) {
+    //     test = i;
+	//     flash_write_protection_set(dev, false);
+    //     int rc = flash_write(dev, area->fa_off + i * sizeof(test), &test, sizeof(test));
+    //     if(rc) {
+    //         printk("Run %d, err %d\n", i, rc);
+    //     }
+    //     // contact.cnt = 0;
+	//     flash_write_protection_set(dev, false);
+    //     rc = flash_read(dev, area->fa_off + i * sizeof(test), &test, sizeof(test));
+    //     if(rc) {
+    //         printk("Run %d, err %d\n", i, rc);
+    //     }
+    //     printk("Round: %d, test: %d, size: %d\n", i, test, sizeof(test));
+    // }
+    // uint64_t nanoseconds_spent = k_cyc_to_ms_floor64(k_cycle_get_32() - start_time);
+    // printk("adding 100 contacts %llu ms\n", nanoseconds_spent);
+    // printk("average: %llu\n", nanoseconds_spent / 100);
+
+    // start_time = k_cycle_get_32();
+    // for(int i = 0; i < 100; i++) {
+    //     contact_t contact;
+    //     int rc = flash_read(dev, i * 32, &contact, sizeof(contact));
+    //     if(rc) {
+    //         printk("Run %d, err %d\n", i, rc);
+    //     }
+    // }
+    // nanoseconds_spent = k_cyc_to_ms_floor64(k_cycle_get_32() - start_time);
+    // printk("loading 100 contacts %llu ms\n", nanoseconds_spent);
+    // printk("average: %llu\n", nanoseconds_spent / 100);
