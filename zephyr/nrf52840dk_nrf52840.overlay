@@ -1,6 +1,4 @@
 
-/delete-node/ &storage_partition;
-
 &mx25r64 {
 	partitions {
 		compatible = "fixed-partitions";
@@ -8,7 +6,7 @@
 		#size-cells = <1>;
 
 		partition@0 {
-			label = "storage";
+			label = "ens_storage";
 			reg = <0x0000000 0x00300000>;
 		};
 	};
