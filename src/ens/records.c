@@ -1,4 +1,5 @@
 #include <string.h>
+
 #include "records.h"
 #include "covid_types.h"
 
