@@ -99,6 +99,7 @@ int init_contact_storage(void) {
     printk("Currently %d contacts stored!\n", contact_information.count);
     printk("Space available: %d\n", FLASH_AREA_SIZE(storage));
 
+    // TODO lome: change size to sizeof(contact_struct)
     rc = ens_fs_init(&ens_fs, FLASH_AREA_ID(ens_storage), 32);
     if(rc) {
         printk("Cannot init ens_fs (err %d)\n", rc);
@@ -108,7 +109,8 @@ int init_contact_storage(void) {
 
 int load_contact(contact_t* dest, record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
-    int rc = nvs_read(&info_fs, id, dest, sizeof(*dest));
+    // int rc = nvs_read(&info_fs, id, dest, sizeof(*dest));
+    int rc = ens_fs_read(&ens_fs, id, dest);
     if (rc <= 0) {
         return rc;
     }
@@ -119,27 +121,33 @@ int add_contact(contact_t* src) {
     record_sequence_number_t curr_sn = get_next_sequence_number();
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
-    int rc = nvs_write(&info_fs, id, src, sizeof(*src));
+    // If we are at start of a page, we need to erase it first
+    if(!(id * ens_fs.entry_size) % ens_fs.sector_size) {
+        ens_fs_page_erase(&ens_fs, id, 1);
+    }
+
+    int rc = ens_fs_write(&ens_fs, id, src);
     if (rc > 0) {
         return 0;
     }
     return rc;
 }
 
-// TODO handle start and end
+// TODO lome: Implement delete flag in ens_fs.c
 int delete_contact(record_sequence_number_t sn) {
-    storage_id_t id = convert_sn_to_storage_id(sn);
-    int rc = nvs_delete(&info_fs, id);
-    if (!rc) {
-        if (sn_equal(sn, get_latest_sequence_number())) {
-            contact_information.count--;
-        } else if (sn_equal(sn, get_oldest_sequence_number())) {
-            contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
-            contact_information.count--;
-        }
-        save_storage_information();
-    }
-    return rc;
+    // storage_id_t id = convert_sn_to_storage_id(sn);
+    // int rc = nvs_delete(&info_fs, id);
+    // if (!rc) {
+    //     if (sn_equal(sn, get_latest_sequence_number())) {
+    //         contact_information.count--;
+    //     } else if (sn_equal(sn, get_oldest_sequence_number())) {
+    //         contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
+    //         contact_information.count--;
+    //     }
+    //     save_storage_information();
+    // }
+    // return rc;
+    return 0;
 }
 
 record_sequence_number_t get_latest_sequence_number() {

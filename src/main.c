@@ -9,6 +9,7 @@
 #include <bluetooth/hci.h>
 #include <random/rand32.h>
 #include <sys/printk.h>
+
 #include "contacts.h"
 #include "covid.h"
 #include "covid_types.h"
