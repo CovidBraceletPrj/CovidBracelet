@@ -1,6 +1,7 @@
-#include "ens_fs.h"
 #include <drivers/flash.h>
 #include <storage/flash_map.h>
+
+#include "ens_fs.h"
 
 int ens_fs_init(ens_fs_t* fs, uint8_t id, uint64_t entry_size) {
     int rc = flash_area_open(id, &fs->area);

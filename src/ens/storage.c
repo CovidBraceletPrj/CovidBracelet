@@ -6,7 +6,7 @@
 #include <string.h>
 #include <zephyr.h>
 
-#include "../sequencenumber.h"
+#include "sequencenumber.h"
 #include "storage.h"
 
 // Get external flash device
