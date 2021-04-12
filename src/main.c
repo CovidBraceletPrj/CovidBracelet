@@ -9,14 +9,13 @@
 #include <bluetooth/hci.h>
 #include <random/rand32.h>
 #include <sys/printk.h>
-
 #include "contacts.h"
 #include "covid.h"
 #include "covid_types.h"
 #include "exposure-notification.h"
 #include "gatt_service.h"
 #include "io.h"
-#include "storage.h"
+#include "ens/storage.h"
 
 void main(void) {
     int err = 0;
@@ -30,11 +29,12 @@ void main(void) {
         return;
     }
 
-    err = init_contact_storage();
-    if (err) {
-        printk("init storage failed (err %d)\n", err);
-        return;
-    }
+    // TODO lome: Cleanup storage
+    // err = init_contact_storage();
+    // if (err) {
+    //     printk("init storage failed (err %d)\n", err);
+    //     return;
+    // }
 
     init_contacts();
     err = init_io();
