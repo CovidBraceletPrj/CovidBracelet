@@ -1,5 +1,5 @@
-#ifndef FCB_H
-#define FCB_H
+#ifndef ENS_FS_H
+#define ENS_FS_H
 
 #include <device.h>
 #include <kernel.h>

@@ -6,36 +6,23 @@
 #include <string.h>
 #include <zephyr.h>
 
+#include "ens_fs.h"
 #include "sequencenumber.h"
 #include "storage.h"
 
-// Get external flash device
-#if (CONFIG_SPI_NOR - 0) || DT_NODE_HAS_STATUS(DT_INST(0, jedec_spi_nor), okay)
-#define FLASH_DEVICE DT_LABEL(DT_INST(0, jedec_spi_nor))
-#define FLASH_NAME "JEDEC SPI-NOR"
-#elif (CONFIG_NORDIC_QSPI_NOR - 0) || DT_NODE_HAS_STATUS(DT_INST(0, nordic_qspi_nor), okay)
-#define FLASH_DEVICE DT_LABEL(DT_INST(0, nordic_qspi_nor))
-#define FLASH_NAME "JEDEC QSPI-NOR"
-#else
-#error Unsupported flash driver
-#endif
-
 // Maybe use this as param for init function
-#define SEC_COUNT 96U
+#define SEC_COUNT 8U
 
 #define STORED_CONTACTS_INFO_ID 0
-#define CONTACTS_OFFSET 1
-#define MAX_CONTACTS 65535
+#define MAX_CONTACTS 65536
 
-static struct nvs_fs fs;
-
-struct k_mutex fs_mutex;
+static struct nvs_fs info_fs;
 
 // Information about currently stored contacts
 static stored_contacts_information_t contact_information = {.oldest_contact = 0, .count = 0};
 
 inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
-    return (storage_id_t)(sn % MAX_CONTACTS) + CONTACTS_OFFSET;
+    return (storage_id_t)(sn % MAX_CONTACTS);
 }
 
 /**
@@ -43,12 +30,12 @@ inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
  */
 int load_storage_information() {
     size_t size = sizeof(contact_information);
-    int rc = nvs_read(&fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
+    int rc = nvs_read(&info_fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
 
     // Check, if read what we wanted
     if (rc != size) {
         // Write our initial data to storage
-        rc = nvs_write(&fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
+        rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
         if (rc <= 0) {
             return rc;
         }
@@ -60,7 +47,7 @@ int load_storage_information() {
  * Save our current storage infromation to flash.
  */
 int save_storage_information() {
-    int rc = nvs_write(&fs, STORED_CONTACTS_INFO_ID, &contact_information, sizeof(contact_information));
+    int rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &contact_information, sizeof(contact_information));
     if (rc <= 0) {
         printk("Something went wrong after saving storage information.\n");
     }
@@ -78,22 +65,20 @@ record_sequence_number_t get_next_sequence_number() {
 }
 
 int init_contact_storage(void) {
-    k_mutex_init(&fs_mutex);
     int rc = 0;
     struct flash_pages_info info;
     // define the nvs file system
-    fs.offset = FLASH_AREA_OFFSET(storage);
-    fs.nvs_lock = fs_mutex;
-    rc = flash_get_page_info_by_offs(device_get_binding(FLASH_DEVICE), fs.offset, &info);
+    info_fs.offset = FLASH_AREA_OFFSET(storage);
+    rc = flash_get_page_info_by_offs(device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL), info_fs.offset, &info);
 
     if (rc) {
         // Error during retrieval of page information
         return rc;
     }
-    fs.sector_size = info.size * 8;
-    fs.sector_count = SEC_COUNT;
+    info_fs.sector_size = info.size;
+    info_fs.sector_count = SEC_COUNT;
 
-    rc = nvs_init(&fs, FLASH_DEVICE);
+    rc = nvs_init(&info_fs, DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
     if (rc) {
         // Error during nvs_init
         return rc;
@@ -110,7 +95,7 @@ int init_contact_storage(void) {
 
 int load_contact(contact_t* dest, record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
-    int rc = nvs_read(&fs, id, dest, sizeof(*dest));
+    int rc = nvs_read(&info_fs, id, dest, sizeof(*dest));
     if (rc <= 0) {
         return rc;
     }
@@ -121,7 +106,7 @@ int add_contact(contact_t* src) {
     record_sequence_number_t curr_sn = get_next_sequence_number();
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
-    int rc = nvs_write(&fs, id, src, sizeof(*src));
+    int rc = nvs_write(&info_fs, id, src, sizeof(*src));
     if (rc > 0) {
         return 0;
     }
@@ -131,7 +116,7 @@ int add_contact(contact_t* src) {
 // TODO handle start and end
 int delete_contact(record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
-    int rc = nvs_delete(&fs, id);
+    int rc = nvs_delete(&info_fs, id);
     if (!rc) {
         if (sn_equal(sn, get_latest_sequence_number())) {
             contact_information.count--;
