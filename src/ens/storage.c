@@ -101,7 +101,7 @@ int init_contact_storage(void) {
 
     // TODO lome: change size to sizeof(contact_struct)
     rc = ens_fs_init(&ens_fs, FLASH_AREA_ID(ens_storage), 32);
-    if(rc) {
+    if (rc) {
         printk("Cannot init ens_fs (err %d)\n", rc);
     }
     return rc;
@@ -118,13 +118,18 @@ int load_contact(contact_t* dest, record_sequence_number_t sn) {
 }
 
 int add_contact(contact_t* src) {
+
+    // Check, if next sn would be at start of page
+    record_sequence_number_t potential_next_sn = sn_increment(get_latest_sequence_number());
+    storage_id_t potential_next_id = convert_sn_to_storage_id(potential_next_sn);
+    if (((potential_next_id * ens_fs.entry_size) % ens_fs.sector_size) == 0) {
+        // If we are at start of a page, we need to erase it first
+        ens_fs_page_erase(&ens_fs, potential_next_id, 1);
+    }
+
+    // Actually increment sn
     record_sequence_number_t curr_sn = get_next_sequence_number();
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
-
-    // If we are at start of a page, we need to erase it first
-    if(!(id * ens_fs.entry_size) % ens_fs.sector_size) {
-        ens_fs_page_erase(&ens_fs, id, 1);
-    }
 
     int rc = ens_fs_write(&ens_fs, id, src);
     if (rc > 0) {
