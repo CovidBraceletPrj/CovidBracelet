@@ -15,7 +15,9 @@ typedef struct ens_fs {
     const struct flash_area* area;
     /**
      * Size of each individual entry. The last byte will be used by 
-     * ens_fs to store metadata about each individual entry.
+     * ens_fs to store metadata about each individual entry. 
+     * 
+     * @attention has to be multiple of drivers write size
      */
     size_t entry_size;
     /**
