@@ -107,7 +107,7 @@ int init_contact_storage(void) {
     return rc;
 }
 
-int load_contact(contact_t* dest, record_sequence_number_t sn) {
+int load_contact(record_t* dest, record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
     // int rc = nvs_read(&info_fs, id, dest, sizeof(*dest));
     int rc = ens_fs_read(&ens_fs, id, dest);
@@ -117,7 +117,7 @@ int load_contact(contact_t* dest, record_sequence_number_t sn) {
     return 0;
 }
 
-int add_contact(contact_t* src) {
+int add_contact(record_t* src) {
 
     // Check, if next sn would be at start of page
     record_sequence_number_t potential_next_sn = sn_increment(get_latest_sequence_number());
@@ -129,6 +129,7 @@ int add_contact(contact_t* src) {
 
     // Actually increment sn
     record_sequence_number_t curr_sn = get_next_sequence_number();
+    src->sn = curr_sn;
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
     int rc = ens_fs_write(&ens_fs, id, src);
@@ -138,21 +139,20 @@ int add_contact(contact_t* src) {
     return rc;
 }
 
-// TODO lome: Implement delete flag in ens_fs.c
 int delete_contact(record_sequence_number_t sn) {
-    // storage_id_t id = convert_sn_to_storage_id(sn);
-    // int rc = nvs_delete(&info_fs, id);
-    // if (!rc) {
-    //     if (sn_equal(sn, get_latest_sequence_number())) {
-    //         contact_information.count--;
-    //     } else if (sn_equal(sn, get_oldest_sequence_number())) {
-    //         contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
-    //         contact_information.count--;
-    //     }
-    //     save_storage_information();
-    // }
-    // return rc;
-    return 0;
+    // TODO lome: Use lock
+    storage_id_t id = convert_sn_to_storage_id(sn);
+    int rc = ens_fs_delete(&ens_fs, id);
+    if (!rc) {
+        if (sn_equal(sn, get_latest_sequence_number())) {
+            contact_information.count--;
+        } else if (sn_equal(sn, get_oldest_sequence_number())) {
+            contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
+            contact_information.count--;
+        }
+        save_storage_information();
+    }
+    return rc;
 }
 
 record_sequence_number_t get_latest_sequence_number() {

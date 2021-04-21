@@ -10,14 +10,6 @@
 #include "sequencenumber.h"
 #include "storage.h"
 
-typedef struct record {
-    record_sequence_number_t sn;  // TODO: Convert Sequence Number
-    uint32_t timestamp;           // TODO: Seconds from january first 2000 (UTC+0)
-    rssi_t rssi;                  // TODO: Check correct
-    rolling_proximity_identifier_t rolling_proximity_identifier;
-    associated_encrypted_metadata_t associated_encrypted_metadata;
-} record_t;
-
 typedef struct record_iterator {
     record_t current;
     record_sequence_number_t sn_next;

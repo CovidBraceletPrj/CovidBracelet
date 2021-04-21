@@ -24,7 +24,7 @@ record_t* ens_records_iterator_next(record_iterator_t* iter) {
 
     // What is this?
     while (next == NULL) {
-        contact_t contact;
+        record_t contact;
         // try to load the next contact
         int res = load_contact(&contact, iter->sn_next);
 
@@ -32,7 +32,7 @@ record_t* ens_records_iterator_next(record_iterator_t* iter) {
             next = &iter->current;
             memcpy(&next->associated_encrypted_metadata, &contact.associated_encrypted_metadata, sizeof(associated_encrypted_metadata_t));
             memcpy(&next->rolling_proximity_identifier, &contact.rolling_proximity_identifier, sizeof(rolling_proximity_identifier_t));
-            memcpy(&next->rssi, &contact.max_rssi, sizeof(rssi_t));
+            memcpy(&next->rssi, &contact.rssi, sizeof(rssi_t));
             memcpy(&next->sn, &iter->sn_next, sizeof(record_sequence_number_t));
 
             // TODO lome: timestamp?
