@@ -17,6 +17,7 @@
 #include "covid_types.h"
 #include "contacts.h"
 #include "covid.h"
+#include "ens/storage.h"
 
 #ifndef COVID_MEASURE_PERFORMANCE
 #define COVID_MEASURE_PERFORMANCE 0
@@ -74,7 +75,16 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, str
 				covid_adv_svd_t *rx_adv = (covid_adv_svd_t *)buf->data;
 				if (rx_adv->ens == COVID_ENS)
 				{
-					check_add_contact(k_uptime_get() / 1000, &rx_adv->rolling_proximity_identifier, &rx_adv->associated_encrypted_metadata, rssi);
+                    printk("Attempting to store contact...\n");
+                    record_t contact;
+                    uint32_t timestamp = k_uptime_get() / 1000;
+                    memcpy(&contact.rssi, &rssi, sizeof(contact.rssi));
+                    memcpy(&contact.associated_encrypted_metadata, &rx_adv->associated_encrypted_metadata, sizeof(contact.associated_encrypted_metadata));
+                    memcpy(&contact.rolling_proximity_identifier, &rx_adv->rolling_proximity_identifier, sizeof(contact.rolling_proximity_identifier));
+                    memcpy(&contact.timestamp, &timestamp, sizeof(contact.timestamp));
+                    int rc = add_contact(&contact);
+                    printk("Contact stored (err %d)\n", rc);
+					// check_add_contact(k_uptime_get() / 1000, &rx_adv->rolling_proximity_identifier, &rx_adv->associated_encrypted_metadata, rssi);
 				}
 			}
 			net_buf_simple_pull(buf, len - 1); //consume the rest, note we already consumed one byte via net_buf_simple_pull_u8(buf)
@@ -312,10 +322,11 @@ static void check_keys(struct k_work *work)
 		memcpy(&covid_adv_svd.rolling_proximity_identifier, &intervalIdentifier, sizeof(rolling_proximity_identifier_t));
 		memcpy(&covid_adv_svd.associated_encrypted_metadata, &encryptedMetadata, sizeof(associated_encrypted_metadata_t));
 
-		if (!init)
-		{
-			key_change(current_period_index);
-		}
+        // // TODO lome: remove this?
+		// if (!init)
+		// {
+		// 	key_change(current_period_index);
+		// }
 		init = 0;
 	}
 }
