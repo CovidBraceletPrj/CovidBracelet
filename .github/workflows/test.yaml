@@ -13,5 +13,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install platformio
+        platformio upgrade --dev          
+        platformio update
     - name: Run PlatformIO Tests
       run: platformio test --environment desktop
