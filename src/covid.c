@@ -331,7 +331,7 @@ K_TIMER_DEFINE(my_timer, my_timer_handler, NULL);
 
 static const struct bt_le_scan_param scan_param = {
 	.type = BT_HCI_LE_SCAN_PASSIVE,
-	.filter_dup = BT_HCI_LE_SCAN_FILTER_DUP_DISABLE,
+	.options = BT_LE_SCAN_OPT_FILTER_DUPLICATE,
 	.interval = 0x0010, //Scan Interval (N * 0.625 ms), TODO: set to correct interval
 	.window = 0x0010,	//Scan Window (N * 0.625 ms), TODO: set to correct interval
 };
