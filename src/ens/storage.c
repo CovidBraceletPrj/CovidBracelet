@@ -111,7 +111,7 @@ int load_contact(record_t* dest, record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
     // int rc = nvs_read(&info_fs, id, dest, sizeof(*dest));
     int rc = ens_fs_read(&ens_fs, id, dest);
-    if (rc <= 0) {
+    if (rc < 0) {
         return rc;
     }
     return 0;
@@ -132,11 +132,7 @@ int add_contact(record_t* src) {
     src->sn = curr_sn;
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
-    int rc = ens_fs_write(&ens_fs, id, src);
-    if (rc > 0) {
-        return 0;
-    }
-    return rc;
+    return ens_fs_write(&ens_fs, id, src);
 }
 
 int delete_contact(record_sequence_number_t sn) {
