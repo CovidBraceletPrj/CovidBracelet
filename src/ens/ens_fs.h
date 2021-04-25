@@ -2,11 +2,10 @@
 #define ENS_FS_H
 
 #include <device.h>
+#include <fs/fs.h>
 #include <kernel.h>
+#include <stdint.h>
 #include <storage/flash_map.h>
-
-#include "fs/fs.h"
-#include "stdint.h"
 
 typedef struct ens_fs {
     /**
@@ -14,9 +13,9 @@ typedef struct ens_fs {
      */
     const struct flash_area* area;
     /**
-     * Size of each individual entry. The last byte will be used by 
-     * ens_fs to store metadata about each individual entry. 
-     * 
+     * Size of each individual entry. The last byte will be used by
+     * ens_fs to store metadata about each individual entry.
+     *
      * @attention has to be multiple of drivers write size
      */
     size_t entry_size;
@@ -36,7 +35,7 @@ typedef struct ens_fs {
 
 /**
  * Initialize the file system.
- * 
+ *
  * @param fs file system
  * @param id id of the partition
  * @param size of each entry in the file-system. Has to power of 2
@@ -83,7 +82,7 @@ int ens_fs_delete(ens_fs_t* fs, uint64_t id);
  * @param fs file system
  * @param offset offset to start erasing
  * @param sector_count count of sectors to erase
- * 
+ *
  * @return 0 on success, -errno otherwise
  */
 int ens_fs_page_erase(ens_fs_t* fs, uint64_t offset, uint64_t sector_count);
