@@ -27,7 +27,7 @@ int ens_fs_init(ens_fs_t* fs, uint8_t id, uint64_t entry_size) {
     struct flash_pages_info info;
     if (flash_get_page_info_by_offs(dev, fs->area->fa_off, &info)) {
         // on error, close the flash area
-        flash_area_close(&fs->area);
+        flash_area_close(fs->area);
         return -ENS_INTERR;
     }
     fs->sector_size = info.size;
