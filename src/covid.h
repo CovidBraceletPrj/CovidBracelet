@@ -7,6 +7,8 @@
 #ifndef COVID_H
 #define COVID_H
 
+#include <zephyr.h>
+
 #include "exposure-notification.h"
 
 typedef struct period{

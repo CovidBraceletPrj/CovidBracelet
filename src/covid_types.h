@@ -7,6 +7,7 @@
 #ifndef COVID_TYPES_H
 #define COVID_TYPES_H
 
+#include <zephyr.h>
 #include <zephyr/types.h>
 
 #define COVID_ROLLING_PROXIMITY_IDENTIFIER_LEN 16
