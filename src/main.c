@@ -36,7 +36,6 @@ void main(void) {
         return;
     }
 
-    init_contacts();
     err = init_io();
     if (err) {
         printk("Button init failed (err %d)\n", err);
