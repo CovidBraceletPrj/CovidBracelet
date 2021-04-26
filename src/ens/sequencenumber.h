@@ -11,7 +11,7 @@ typedef uint32_t record_sequence_number_t;
 /**
  * Mask a given sequence number to get rid of MSB.
  * TODO: maybe as #define?
- * 
+ *
  * @param sn sequence number to mask
  * @return masked sequence number
  */
@@ -19,7 +19,7 @@ record_sequence_number_t sn_mask(record_sequence_number_t sn);
 
 /**
  * Compare to sequence numbers for equality.
- * 
+ *
  * @param a first sequence number
  * @param b second sequence number
  * @return 1, if sequence numbers are equal, 0 otherwise.

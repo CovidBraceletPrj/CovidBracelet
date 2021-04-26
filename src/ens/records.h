@@ -24,8 +24,6 @@ int ens_records_iterator_init_range(record_iterator_t* iterator,
                                     record_sequence_number_t* opt_start,
                                     record_sequence_number_t* opt_end);
 
-// TODO: This function should call with the relevant start and end sequence numbers (retrieved through e.g. binary
-// search / metadata)
 // TODO: Do we guarantee that higher sequence numbers have at least our timestamp and lower sequence numbers up to our
 // timestamp?
 int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* ts_start, uint32_t* ts_end);
