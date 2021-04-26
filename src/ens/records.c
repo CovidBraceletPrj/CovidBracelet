@@ -66,16 +66,34 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
     record_sequence_number_t oldest_sn = get_oldest_sequence_number();
     record_sequence_number_t latest_sn = get_latest_sequence_number();
 
+    // try to find the oldest contact in our timerange
     record_t start_rec;
     int rc = load_contact(&start_rec, oldest_sn);
     if(rc) {
         return rc;
     }
+    // if starting timestamp lies in our bounds, perform binary search
+    if(start_rec.timestamp < *ts_start) {
+        rc = find_record_via_binary_search(&start_rec, *ts_start, oldest_sn, latest_sn);
 
+        if(rc) {
+            return rc;
+        }
+    }
+
+    // try to find the newest contact within out timerange
     record_t end_rec;
     rc = load_contact(&end_rec, latest_sn);
     if(rc) {
         return rc;
+    }
+    // if ending timestamp lies in our bounds, perform binary search
+    if(end_rec.timestamp > *ts_end) {
+        rc = find_record_via_binary_search(&end_rec, *ts_end, oldest_sn, latest_sn);
+
+        if(rc) {
+            return rc;
+        }
     }
 
     iterator->finished = false;
@@ -122,9 +140,9 @@ record_t* ens_records_iterator_next(record_iterator_t* iter) {
 }
 
 int ens_record_iterator_clear(record_iterator_t* iter) {
-    // TODO: memclear  iter->current ?
-    //
+    // clear all relevant fields in the iterator
     iter->finished = true;
+    memset(&iter->current, 0, sizeof(iter->current));
     return 0;
 }
 
