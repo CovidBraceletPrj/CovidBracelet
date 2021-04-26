@@ -18,6 +18,7 @@
 #define MAX_CONTACTS 65536
 
 static struct nvs_fs info_fs;
+static struct k_mutex info_fs_lock;
 
 static ens_fs_t ens_fs;
 
@@ -32,6 +33,7 @@ inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
  * Load our initial storage information from flash.
  */
 int load_storage_information() {
+    k_mutex_lock(&info_fs_lock, K_FOREVER);
     size_t size = sizeof(contact_information);
     int rc = nvs_read(&info_fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
 
@@ -43,6 +45,7 @@ int load_storage_information() {
             return rc;
         }
     }
+    k_mutex_unlock(&info_fs_lock);
     return 0;
 }
 
@@ -50,21 +53,26 @@ int load_storage_information() {
  * Save our current storage infromation to flash.
  */
 int save_storage_information() {
+    k_mutex_lock(&info_fs_lock, K_FOREVER);
     int rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &contact_information, sizeof(contact_information));
     if (rc <= 0) {
         printk("Something went wrong after saving storage information.\n");
     }
+    k_mutex_unlock(&info_fs_lock);
     return rc;
 }
 
 record_sequence_number_t get_next_sequence_number() {
+    k_mutex_lock(&info_fs_lock, K_FOREVER);
     if (contact_information.count >= MAX_CONTACTS) {
         contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
     } else {
         contact_information.count++;
     }
     save_storage_information();
-    return get_latest_sequence_number();
+    record_sequence_number_t next_sn = get_latest_sequence_number();
+    k_mutex_unlock(&info_fs_lock);
+    return next_sn;
 }
 
 int init_contact_storage(void) {
@@ -84,6 +92,7 @@ int init_contact_storage(void) {
     info_fs.sector_count = SEC_COUNT;
 
     rc = nvs_init(&info_fs, DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
+    k_mutex_init(&info_fs_lock);
     if (rc) {
         // Error during nvs_init
         printk("Cannot init NVS (err %d)\n", rc);
@@ -136,10 +145,10 @@ int add_contact(record_t* src) {
 }
 
 int delete_contact(record_sequence_number_t sn) {
-    // TODO lome: Use lock
     storage_id_t id = convert_sn_to_storage_id(sn);
     int rc = ens_fs_delete(&ens_fs, id);
     if (!rc) {
+        k_mutex_lock(&info_fs_lock, K_FOREVER);
         if (sn_equal(sn, get_latest_sequence_number())) {
             contact_information.count--;
         } else if (sn_equal(sn, get_oldest_sequence_number())) {
@@ -147,10 +156,12 @@ int delete_contact(record_sequence_number_t sn) {
             contact_information.count--;
         }
         save_storage_information();
+        k_mutex_unlock(&info_fs_lock);
     }
     return rc;
 }
 
+// TODO lome: do we need lock here aswell?
 record_sequence_number_t get_latest_sequence_number() {
     return sn_mask(contact_information.oldest_contact + contact_information.count);
 }
