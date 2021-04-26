@@ -2,8 +2,8 @@
 #define CONTACT_STORAGE_H
 
 #include "../contacts.h"  // Requires contact_t in contacts.h!
-#include "sequencenumber.h"
 #include "../covid_types.h"
+#include "sequencenumber.h"
 
 typedef uint16_t storage_id_t;
 

@@ -72,7 +72,8 @@ int init_contact_storage(void) {
     struct flash_pages_info info;
     // define the nvs file system
     info_fs.offset = FLASH_AREA_OFFSET(storage);
-    rc = flash_get_page_info_by_offs(device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL), info_fs.offset, &info);
+    rc =
+        flash_get_page_info_by_offs(device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL), info_fs.offset, &info);
 
     if (rc) {
         // Error during retrieval of page information
@@ -118,7 +119,6 @@ int load_contact(record_t* dest, record_sequence_number_t sn) {
 }
 
 int add_contact(record_t* src) {
-
     // Check, if next sn would be at start of page
     record_sequence_number_t potential_next_sn = sn_increment(get_latest_sequence_number());
     storage_id_t potential_next_id = convert_sn_to_storage_id(potential_next_sn);

@@ -69,14 +69,14 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
     // try to find the oldest contact in our timerange
     record_t start_rec;
     int rc = load_contact(&start_rec, oldest_sn);
-    if(rc) {
+    if (rc) {
         return rc;
     }
     // if starting timestamp lies in our bounds, perform binary search
-    if(start_rec.timestamp < *ts_start) {
+    if (start_rec.timestamp < *ts_start) {
         rc = find_record_via_binary_search(&start_rec, *ts_start, oldest_sn, latest_sn);
 
-        if(rc) {
+        if (rc) {
             return rc;
         }
     }
@@ -84,14 +84,14 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
     // try to find the newest contact within out timerange
     record_t end_rec;
     rc = load_contact(&end_rec, latest_sn);
-    if(rc) {
+    if (rc) {
         return rc;
     }
     // if ending timestamp lies in our bounds, perform binary search
-    if(end_rec.timestamp > *ts_end) {
+    if (end_rec.timestamp > *ts_end) {
         rc = find_record_via_binary_search(&end_rec, *ts_end, oldest_sn, latest_sn);
 
-        if(rc) {
+        if (rc) {
             return rc;
         }
     }
