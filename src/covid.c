@@ -84,7 +84,6 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, str
                     memcpy(&contact.timestamp, &timestamp, sizeof(contact.timestamp));
                     int rc = add_contact(&contact);
                     printk("Contact stored (err %d)\n", rc);
-					// check_add_contact(k_uptime_get() / 1000, &rx_adv->rolling_proximity_identifier, &rx_adv->associated_encrypted_metadata, rssi);
 				}
 			}
 			net_buf_simple_pull(buf, len - 1); //consume the rest, note we already consumed one byte via net_buf_simple_pull_u8(buf)
@@ -111,14 +110,14 @@ static void test_against_fixtures(void)
 	// First define base values
 	ENIntervalNumber intervalNumber = 2642976;
 	ENPeriodKey periodKey = {.b = {0x75, 0xc7, 0x34, 0xc6, 0xdd, 0x1a, 0x78, 0x2d, 0xe7, 0xa9, 0x65, 0xda, 0x5e, 0xb9, 0x31, 0x25}};
-	// unsigned char metadata[4] = {0x40, 0x08, 0x00, 0x00};
+	unsigned char metadata[4] = {0x40, 0x08, 0x00, 0x00};
 
 	// define the expected values
 	ENPeriodIdentifierKey expectedPIK = {.b = {0x18, 0x5a, 0xd9, 0x1d, 0xb6, 0x9e, 0xc7, 0xdd, 0x04, 0x89, 0x60, 0xf1, 0xf3, 0xba, 0x61, 0x75}};
-	// ENPeriodMetadataEncryptionKey expectedPMEK = {.b = {0xd5, 0x7c, 0x46, 0xaf, 0x7a, 0x1d, 0x83, 0x96, 0x5b, 0x9b, 0xed, 0x8b, 0xd1, 0x52, 0x93, 0x6a}};
+	ENPeriodMetadataEncryptionKey expectedPMEK = {.b = {0xd5, 0x7c, 0x46, 0xaf, 0x7a, 0x1d, 0x83, 0x96, 0x5b, 0x9b, 0xed, 0x8b, 0xd1, 0x52, 0x93, 0x6a}};
 
 	ENIntervalIdentifier expectedIntervalIdentifier = {.b = {0x8b, 0xe6, 0xcd, 0x37, 0x1c, 0x5c, 0x89, 0x16, 0x04, 0xbf, 0xbe, 0x49, 0xdf, 0x84, 0x50, 0x96}};
-	// unsigned char expectedEncryptedMetadata[4] = {0x72, 0x03, 0x38, 0x74};
+	unsigned char expectedEncryptedMetadata[4] = {0x72, 0x03, 0x38, 0x74};
 
 	ENPeriodIdentifierKey pik;
 	en_derive_period_identifier_key(&pik, &periodKey);
@@ -322,11 +321,6 @@ static void check_keys(struct k_work *work)
 		memcpy(&covid_adv_svd.rolling_proximity_identifier, &intervalIdentifier, sizeof(rolling_proximity_identifier_t));
 		memcpy(&covid_adv_svd.associated_encrypted_metadata, &encryptedMetadata, sizeof(associated_encrypted_metadata_t));
 
-        // // TODO lome: remove this?
-		// if (!init)
-		// {
-		// 	key_change(current_period_index);
-		// }
 		init = 0;
 	}
 }
