@@ -27,6 +27,10 @@ typedef struct ens_fs {
      * Amount of sectors in this fs.
      */
     uint16_t sector_count;
+    /**
+     * Lock for this fs.
+     */
+    struct k_mutex ens_fs_lock;
 } ens_fs_t;
 
 /**
@@ -76,11 +80,11 @@ int ens_fs_delete(ens_fs_t* fs, uint64_t id);
  * Erase a given amount of flash sectors. Starting at offset (if offset is not at page start, it will be rounded down).
  *
  * @param fs file system
- * @param offset offset to start erasing
+ * @param id id of the entry to erase the page for
  * @param sector_count count of sectors to erase
  *
  * @return 0 on success, -errno otherwise
  */
-int ens_fs_page_erase(ens_fs_t* fs, uint64_t offset, uint64_t sector_count);
+int ens_fs_page_erase(ens_fs_t* fs, uint64_t id, uint64_t sector_count);
 
 #endif
