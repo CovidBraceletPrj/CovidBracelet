@@ -27,10 +27,6 @@ typedef struct ens_fs {
      * Amount of sectors in this fs.
      */
     uint16_t sector_count;
-    /**
-     * Lock for this fs.
-     */
-    // struct k_mutex* lock;
 } ens_fs_t;
 
 /**
@@ -42,7 +38,7 @@ typedef struct ens_fs {
  *
  * @return 0 on success, -errno otherwise
  */
-int ens_fs_init(ens_fs_t* fs, uint8_t id, uint64_t entry_size);
+int ens_fs_init(ens_fs_t* fs, uint8_t flash_id, uint64_t entry_size);
 
 /**
  * Read an entry from this file system.
@@ -53,7 +49,7 @@ int ens_fs_init(ens_fs_t* fs, uint8_t id, uint64_t entry_size);
  *
  * @return 0 on success, -errno otherwise
  */
-int ens_fs_read(ens_fs_t* fs, uint64_t id, void* dist);
+int ens_fs_read(ens_fs_t* fs, uint64_t id, void* dest);
 
 /**
  * Write data to the file system.
