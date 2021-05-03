@@ -127,12 +127,25 @@ int load_record(record_t* dest, record_sequence_number_t sn) {
 }
 
 int add_record(record_t* src) {
+    int sectorsToDelete = 1;
+
+    k_mutex_lock(&info_fs_lock, K_FOREVER);
+
     // Check, if next sn would be at start of page
     record_sequence_number_t potential_next_sn = sn_increment(get_latest_sequence_number());
     storage_id_t potential_next_id = convert_sn_to_storage_id(potential_next_sn);
     if (((potential_next_id * ens_fs.entry_size) % ens_fs.sector_size) == 0) {
         // If we are at start of a page, we need to erase it first
-        ens_fs_page_erase(&ens_fs, potential_next_id, 1);
+        ens_fs_page_erase(&ens_fs, potential_next_id, sectorsToDelete);
+
+        // if our storage is full, we need to adjust our information about stored records
+        if (get_num_records() == MAX_CONTACTS) {
+            int deletedRecordsCount = (ens_fs.sector_size / ens_fs.entry_size) * sectorsToDelete;
+            record_information.count -= deletedRecordsCount;
+            record_information.oldest_contact =
+                GET_MASKED_SN((record_information.oldest_contact + deletedRecordsCount));
+            save_storage_information();
+        }
     }
 
     // Actually increment sn
@@ -140,6 +153,7 @@ int add_record(record_t* src) {
     src->sn = curr_sn;
     storage_id_t id = convert_sn_to_storage_id(curr_sn);
 
+    k_mutex_unlock(&info_fs_lock);
     return ens_fs_write(&ens_fs, id, src);
 }
 
@@ -148,9 +162,7 @@ int delete_record(record_sequence_number_t sn) {
     int rc = ens_fs_delete(&ens_fs, id);
     if (!rc) {
         k_mutex_lock(&info_fs_lock, K_FOREVER);
-        if (sn_equal(sn, get_latest_sequence_number())) {
-            record_information.count--;
-        } else if (sn_equal(sn, get_oldest_sequence_number())) {
+        if (sn_equal(sn, get_oldest_sequence_number())) {
             record_information.oldest_contact = sn_increment(record_information.oldest_contact);
             record_information.count--;
         }
