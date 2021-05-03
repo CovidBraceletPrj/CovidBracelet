@@ -6,16 +6,12 @@
 // mask for sequence numbers (2^24 - 1)
 #define SN_MASK 16777215
 
-typedef uint32_t record_sequence_number_t;
-
 /**
  * Mask a given sequence number to get rid of MSB.
- * TODO: maybe as #define?
- *
- * @param sn sequence number to mask
- * @return masked sequence number
  */
-record_sequence_number_t sn_mask(record_sequence_number_t sn);
+#define GET_MASKED_SN(x) (x & SN_MASK)
+
+typedef uint32_t record_sequence_number_t;
 
 /**
  * Compare to sequence numbers for equality.
