@@ -13,10 +13,10 @@
 #include "contacts.h"
 #include "covid.h"
 #include "covid_types.h"
+#include "ens/storage.h"
 #include "exposure-notification.h"
 #include "gatt_service.h"
 #include "io.h"
-#include "ens/storage.h"
 
 void main(void) {
     int err = 0;
@@ -30,7 +30,7 @@ void main(void) {
         return;
     }
 
-    err = init_contact_storage();
+    err = init_record_storage();
     if (err) {
         printk("init storage failed (err %d)\n", err);
         return;

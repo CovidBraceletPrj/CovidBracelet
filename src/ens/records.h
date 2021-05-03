@@ -43,7 +43,7 @@ enum {
 
 // TODO: this function could be made asynchronous to handle delays in contact_storage reads?!
 // TODO: How can we handle iteration while records are being added or deleted? (should be safe as long as the
-// load_contact function is thread safe?!)
+// load_record function is thread safe?!)
 uint8_t ens_records_iterate_with_callback(record_iterator_t* iter, ens_record_iterator_cb_t cb, void* userdata);
 
 #endif

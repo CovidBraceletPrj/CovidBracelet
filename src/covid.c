@@ -82,7 +82,7 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, str
                     memcpy(&contact.associated_encrypted_metadata, &rx_adv->associated_encrypted_metadata, sizeof(contact.associated_encrypted_metadata));
                     memcpy(&contact.rolling_proximity_identifier, &rx_adv->rolling_proximity_identifier, sizeof(contact.rolling_proximity_identifier));
                     memcpy(&contact.timestamp, &timestamp, sizeof(contact.timestamp));
-                    int rc = add_contact(&contact);
+                    int rc = add_record(&contact);
                     printk("Contact stored (err %d)\n", rc);
 				}
 			}
