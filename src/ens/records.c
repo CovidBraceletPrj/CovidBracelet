@@ -128,6 +128,8 @@ record_t* ens_records_iterator_next(record_iterator_t* iter) {
 int ens_record_iterator_clear(record_iterator_t* iter) {
     // clear all relevant fields in the iterator
     iter->finished = true;
+    iter->sn_next = 0;
+    iter->sn_end = 0;
     memset(&iter->current, 0, sizeof(iter->current));
     return 0;
 }
