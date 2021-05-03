@@ -23,7 +23,7 @@ static struct k_mutex info_fs_lock;
 static ens_fs_t ens_fs;
 
 // Information about currently stored contacts
-static stored_contacts_information_t contact_information = {.oldest_contact = 0, .count = 0};
+static stored_records_information_t record_information = {.oldest_contact = 0, .count = 0};
 
 inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
     return (storage_id_t)(sn % MAX_CONTACTS);
@@ -34,13 +34,13 @@ inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
  */
 int load_storage_information() {
     k_mutex_lock(&info_fs_lock, K_FOREVER);
-    size_t size = sizeof(contact_information);
-    int rc = nvs_read(&info_fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
+    size_t size = sizeof(record_information);
+    int rc = nvs_read(&info_fs, STORED_CONTACTS_INFO_ID, &record_information, size);
 
     // Check, if read what we wanted
     if (rc != size) {
         // Write our initial data to storage
-        rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &contact_information, size);
+        rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &record_information, size);
         if (rc <= 0) {
             return rc;
         }
@@ -54,7 +54,7 @@ int load_storage_information() {
  */
 int save_storage_information() {
     k_mutex_lock(&info_fs_lock, K_FOREVER);
-    int rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &contact_information, sizeof(contact_information));
+    int rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &record_information, sizeof(record_information));
     if (rc <= 0) {
         printk("Something went wrong after saving storage information.\n");
     }
@@ -64,10 +64,10 @@ int save_storage_information() {
 
 record_sequence_number_t get_next_sequence_number() {
     k_mutex_lock(&info_fs_lock, K_FOREVER);
-    if (contact_information.count >= MAX_CONTACTS) {
-        contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
+    if (record_information.count >= MAX_CONTACTS) {
+        record_information.oldest_contact = sn_increment(record_information.oldest_contact);
     } else {
-        contact_information.count++;
+        record_information.count++;
     }
     save_storage_information();
     record_sequence_number_t next_sn = get_latest_sequence_number();
@@ -75,7 +75,7 @@ record_sequence_number_t get_next_sequence_number() {
     return next_sn;
 }
 
-int init_contact_storage(void) {
+int init_record_storage(void) {
     int rc = 0;
     struct flash_pages_info info;
     // define the nvs file system
@@ -106,7 +106,7 @@ int init_contact_storage(void) {
         return rc;
     }
 
-    printk("Currently %d contacts stored!\n", contact_information.count);
+    printk("Currently %d contacts stored!\n", record_information.count);
     printk("Space available: %d\n", FLASH_AREA_SIZE(storage));
 
     // TODO lome: change size to sizeof(contact_struct)
@@ -117,7 +117,7 @@ int init_contact_storage(void) {
     return rc;
 }
 
-int load_contact(record_t* dest, record_sequence_number_t sn) {
+int load_record(record_t* dest, record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
     int rc = ens_fs_read(&ens_fs, id, dest);
     if (rc < 0) {
@@ -126,7 +126,7 @@ int load_contact(record_t* dest, record_sequence_number_t sn) {
     return 0;
 }
 
-int add_contact(record_t* src) {
+int add_record(record_t* src) {
     // Check, if next sn would be at start of page
     record_sequence_number_t potential_next_sn = sn_increment(get_latest_sequence_number());
     storage_id_t potential_next_id = convert_sn_to_storage_id(potential_next_sn);
@@ -143,16 +143,16 @@ int add_contact(record_t* src) {
     return ens_fs_write(&ens_fs, id, src);
 }
 
-int delete_contact(record_sequence_number_t sn) {
+int delete_record(record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
     int rc = ens_fs_delete(&ens_fs, id);
     if (!rc) {
         k_mutex_lock(&info_fs_lock, K_FOREVER);
         if (sn_equal(sn, get_latest_sequence_number())) {
-            contact_information.count--;
+            record_information.count--;
         } else if (sn_equal(sn, get_oldest_sequence_number())) {
-            contact_information.oldest_contact = sn_increment(contact_information.oldest_contact);
-            contact_information.count--;
+            record_information.oldest_contact = sn_increment(record_information.oldest_contact);
+            record_information.count--;
         }
         save_storage_information();
         k_mutex_unlock(&info_fs_lock);
@@ -162,13 +162,13 @@ int delete_contact(record_sequence_number_t sn) {
 
 // TODO lome: do we need lock here aswell?
 record_sequence_number_t get_latest_sequence_number() {
-    return GET_MASKED_SN((contact_information.oldest_contact + contact_information.count));
+    return GET_MASKED_SN((record_information.oldest_contact + record_information.count));
 }
 
 record_sequence_number_t get_oldest_sequence_number() {
-    return contact_information.oldest_contact;
+    return record_information.oldest_contact;
 }
 
-uint32_t get_num_contacts() {
-    return contact_information.count;
+uint32_t get_num_records() {
+    return record_information.count;
 }

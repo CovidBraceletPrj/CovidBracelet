@@ -10,7 +10,7 @@ int ens_records_iterator_init_range(record_iterator_t* iterator,
                                     record_sequence_number_t* opt_end) {
     iterator->sn_next = opt_start ? *opt_start : get_oldest_sequence_number();
     iterator->sn_end = opt_end ? *opt_end : get_latest_sequence_number();
-    if (get_num_contacts() == 0) {
+    if (get_num_records() == 0) {
         iterator->finished = true;  // no contacts -> no iteration :)
     } else {
         iterator->finished = false;
@@ -34,11 +34,11 @@ int find_record_via_binary_search(record_t* record,
     record_t end_record;
 
     // load the initial start and end record
-    int rc = load_contact(&start_record, start);
+    int rc = load_record(&start_record, start);
     if (rc) {
         return rc;
     }
-    rc = load_contact(&end_record, end);
+    rc = load_record(&end_record, end);
     if (rc) {
         return rc;
     }
@@ -46,7 +46,7 @@ int find_record_via_binary_search(record_t* record,
     do {
         // calculate the contact in the middle between start and end and load it
         record_sequence_number_t middle = (start_record.sn + end_record.sn) / 2;
-        int rc = load_contact(record, middle);
+        int rc = load_record(record, middle);
         if (rc) {
             return rc;
         }
@@ -70,7 +70,7 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
 
     // try to find the oldest contact in our timerange
     record_t start_rec;
-    int rc = load_contact(&start_rec, oldest_sn);
+    int rc = load_record(&start_rec, oldest_sn);
     if (rc) {
         return rc;
     }
@@ -85,7 +85,7 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
 
     // try to find the newest contact within out timerange
     record_t end_rec;
-    rc = load_contact(&end_rec, latest_sn);
+    rc = load_record(&end_rec, latest_sn);
     if (rc) {
         return rc;
     }
@@ -109,7 +109,7 @@ record_t* ens_records_iterator_next(record_iterator_t* iter) {
     while (next == NULL && !iter->finished) {
         record_t contact;
         // try to load the next contact
-        int res = load_contact(&contact, iter->sn_next);
+        int res = load_record(&contact, iter->sn_next);
 
         if (!res) {
             next = &iter->current;
