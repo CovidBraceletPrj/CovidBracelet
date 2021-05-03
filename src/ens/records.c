@@ -102,14 +102,9 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
 }
 
 record_t* ens_records_iterator_next(record_iterator_t* iter) {
-    if (iter->finished) {
-        return NULL;
-    }
-
     record_t* next = NULL;
 
-    // What is this?
-    while (next == NULL) {
+    while (next == NULL && !iter->finished) {
         record_t contact;
         // try to load the next contact
         int res = load_contact(&contact, iter->sn_next);
