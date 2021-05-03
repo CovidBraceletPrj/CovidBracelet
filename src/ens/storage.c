@@ -119,7 +119,6 @@ int init_contact_storage(void) {
 
 int load_contact(record_t* dest, record_sequence_number_t sn) {
     storage_id_t id = convert_sn_to_storage_id(sn);
-    // int rc = nvs_read(&info_fs, id, dest, sizeof(*dest));
     int rc = ens_fs_read(&ens_fs, id, dest);
     if (rc < 0) {
         return rc;
