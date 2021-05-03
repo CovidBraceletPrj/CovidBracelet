@@ -12,6 +12,8 @@ int ens_records_iterator_init_range(record_iterator_t* iterator,
     iterator->sn_end = opt_end ? *opt_end : get_latest_sequence_number();
     if (get_num_contacts() == 0) {
         iterator->finished = true;  // no contacts -> no iteration :)
+    } else {
+        iterator->finished = false;
     }
     return 0;
 }
