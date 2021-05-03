@@ -1,11 +1,12 @@
 #ifndef CONTACT_STORAGE_H
 #define CONTACT_STORAGE_H
 
-#include "../contacts.h"  // Requires contact_t in contacts.h!
+#include <zephyr/types.h>
+
 #include "../covid_types.h"
 #include "sequencenumber.h"
 
-typedef uint16_t storage_id_t;
+typedef uint64_t storage_id_t;
 
 typedef struct record {
     record_sequence_number_t sn;  // TODO: Convert Sequence Number
@@ -17,7 +18,7 @@ typedef struct record {
 
 typedef struct stored_records_information {
     record_sequence_number_t oldest_contact;
-    record_sequence_number_t count;
+    uint32_t count;
 } stored_records_information_t;
 
 /**
