@@ -96,9 +96,7 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
         }
     }
 
-    iterator->finished = false;
-    iterator->sn_next = start_rec.sn;
-    iterator->sn_end = end_rec.sn;
+    ens_records_iterator_init_range(iterator, &start_rec.sn, &end_rec.sn);
 
     return 0;
 }
