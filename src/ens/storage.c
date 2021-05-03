@@ -109,8 +109,7 @@ int init_record_storage(void) {
     printk("Currently %d contacts stored!\n", record_information.count);
     printk("Space available: %d\n", FLASH_AREA_SIZE(storage));
 
-    // TODO lome: change size to sizeof(contact_struct)
-    rc = ens_fs_init(&ens_fs, FLASH_AREA_ID(ens_storage), 32);
+    rc = ens_fs_init(&ens_fs, FLASH_AREA_ID(ens_storage), sizeof(record_t));
     if (rc) {
         printk("Cannot init ens_fs (err %d)\n", rc);
     }
