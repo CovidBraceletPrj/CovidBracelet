@@ -63,7 +63,6 @@ record_sequence_number_t get_latest_sequence_number();
 record_sequence_number_t get_oldest_sequence_number();
 
 /**
- * TODO: How to handle if none is available?
  * @return The amount of contacts, usually get_latest_sequence_number() - get_oldest_sequence_number()
  */
 uint32_t get_num_records();
