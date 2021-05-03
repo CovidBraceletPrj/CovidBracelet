@@ -163,7 +163,7 @@ int delete_contact(record_sequence_number_t sn) {
 
 // TODO lome: do we need lock here aswell?
 record_sequence_number_t get_latest_sequence_number() {
-    return sn_mask(contact_information.oldest_contact + contact_information.count);
+    return GET_MASKED_SN((contact_information.oldest_contact + contact_information.count));
 }
 
 record_sequence_number_t get_oldest_sequence_number() {
