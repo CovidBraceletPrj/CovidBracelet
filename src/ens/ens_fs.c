@@ -90,10 +90,11 @@ int ens_fs_read(ens_fs_t* fs, uint64_t id, void* dest) {
     if (!isNotDeleted) {
         // entry got deleted
         rc = -ENS_DELENT;
+        goto end;
     }
 
-end:
     memcpy(dest, obj, fs->entry_size);
+end:
     k_mutex_unlock(&fs->ens_fs_lock);
     return rc;
 }
