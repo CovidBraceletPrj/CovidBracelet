@@ -126,8 +126,8 @@ int ens_fs_delete(ens_fs_t* fs, uint64_t id) {
     uint64_t offset = id * fs->interal_size;
 
     // set memory to 0, so not-deleted flag is 0
-    memset(fs->buffer, 0, fs->entry_size);
-    if (flash_area_write(fs->area, offset, fs->buffer, fs->entry_size)) {
+    memset(fs->buffer, 0, fs->interal_size);
+    if (flash_area_write(fs->area, offset, fs->buffer, fs->interal_size)) {
         // writing was not successful
         rc = -ENS_INTERR;
     }
@@ -141,7 +141,7 @@ int ens_fs_page_erase(ens_fs_t* fs, uint64_t entry_id, uint64_t sector_count) {
     k_mutex_lock(&fs->ens_fs_lock, K_FOREVER);
 
     // calculate the next page start before (or at) the given entry_id
-    uint64_t start = (entry_id - entry_id % fs->sector_size) * fs->entry_size;
+    uint64_t start = (entry_id - entry_id % fs->sector_size) * fs->interal_size;
 
     // erase given amount of pages, starting for the given offset
     if (flash_area_erase(fs->area, start, fs->sector_size * sector_count)) {
