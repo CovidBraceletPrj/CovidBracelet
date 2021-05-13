@@ -64,6 +64,8 @@ int find_record_via_binary_search(record_t* record,
     return 0;
 }
 
+// TODO: This iterator does neither check if the sequence numbers wrapped around while iteration. As a result, first
+// results could have later timestamps than following entries
 int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* ts_start, uint32_t* ts_end) {
     record_sequence_number_t oldest_sn = get_oldest_sequence_number();
     record_sequence_number_t latest_sn = get_latest_sequence_number();

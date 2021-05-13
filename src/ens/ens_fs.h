@@ -31,6 +31,19 @@ typedef struct ens_fs {
      * Lock for this fs.
      */
     struct k_mutex ens_fs_lock;
+    /**
+     * Size for entries, which is used interally.
+     *
+     * usually 2^(ceil(log(entry_size + 1)))
+     */
+    // TODO lome: maybe introduce macro for this?
+    size_t interal_size;
+    /**
+     * Buffer of size internal_size for performing actions regarding fs entries. This is needed, because internal_size
+     * differs from entry_size and we need a buffer for working with our interal datatype.
+     */
+    // TODO lome: maybe move this into functions where it's needed?
+    uint8_t* buffer;
 } ens_fs_t;
 
 /**

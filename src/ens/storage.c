@@ -11,9 +11,6 @@
 #include "sequencenumber.h"
 #include "storage.h"
 
-// Maybe use this as param for init function
-#define SEC_COUNT 8U
-
 #define STORED_CONTACTS_INFO_ID 0
 #define MAX_CONTACTS 65536
 
@@ -89,7 +86,7 @@ int init_record_storage(void) {
         return rc;
     }
     info_fs.sector_size = info.size;
-    info_fs.sector_count = SEC_COUNT;
+    info_fs.sector_count = FLASH_AREA_SIZE(storage) / info.size;
 
     rc = nvs_init(&info_fs, DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
     k_mutex_init(&info_fs_lock);
@@ -141,8 +138,7 @@ int add_record(record_t* src) {
         if (get_num_records() == MAX_CONTACTS) {
             int deletedRecordsCount = (ens_fs.sector_size / ens_fs.entry_size) * sectorsToDelete;
             record_information.count -= deletedRecordsCount;
-            record_information.oldest_contact =
-                GET_MASKED_SN((record_information.oldest_contact + deletedRecordsCount));
+            record_information.oldest_contact = sn_increment_by(record_information.oldest_contact, deletedRecordsCount);
             save_storage_information();
         }
     }
@@ -173,7 +169,7 @@ int delete_record(record_sequence_number_t sn) {
 
 // TODO lome: do we need lock here aswell?
 record_sequence_number_t get_latest_sequence_number() {
-    return GET_MASKED_SN((record_information.oldest_contact + record_information.count));
+    return sn_increment_by(record_information.oldest_contact, record_information.count);
 }
 
 record_sequence_number_t get_oldest_sequence_number() {
