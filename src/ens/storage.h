@@ -14,10 +14,6 @@ typedef struct record {
     rssi_t rssi;                  // TODO: Check correct
     rolling_proximity_identifier_t rolling_proximity_identifier;
     associated_encrypted_metadata_t associated_encrypted_metadata;
-    /**
-     * Filler space, used for storing up to 3 byte of metadata in the filesystem.
-     */
-    uint8_t meta[3];
 } record_t;
 
 typedef struct stored_records_information {
