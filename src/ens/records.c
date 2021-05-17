@@ -26,10 +26,15 @@ int ens_records_iterator_init_range(record_iterator_t* iterator,
  * @param start lower bound for the binary search
  * @param end upper bound for the binary search
  */
+// TODO lome: maybe add flag for indicating whether older or newer contact shall be loaded
 int find_record_via_binary_search(record_t* record,
                                   uint32_t target,
                                   record_sequence_number_t start,
                                   record_sequence_number_t end) {
+    // TODO lome: 1. handle entries with deleted/invalid data -> load left/right entry
+    // TODO lome: 2. handle possible deadlocks because of 1.
+    // TODO lome: 3. check, if oldest ts is newer than the latest -> return error that needs to be handled by the
+    //              calling function
     record_t start_record;
     record_t end_record;
 
@@ -44,6 +49,7 @@ int find_record_via_binary_search(record_t* record,
     }
 
     do {
+        // TODO lome: first entry for start, last entry for end
         // calculate the contact in the middle between start and end and load it
         record_sequence_number_t middle = (start_record.sn + end_record.sn) / 2;
         int rc = load_record(record, middle);
@@ -77,7 +83,11 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
         return rc;
     }
     // if starting timestamp lies in our bounds, perform binary search
+    // TODO lome: check, if ts_start and ts_end are NULL -> use oldest/latest sn then
+    // TODO lome: move oldest_sn and latest_sn to binary_search function
+    // TODO lome: maybe keep track of the oldest and newest timestamp (optimization for later)
     if (start_rec.timestamp < *ts_start) {
+        // TODO lome: only "return" sn, not actual record
         rc = find_record_via_binary_search(&start_rec, *ts_start, oldest_sn, latest_sn);
 
         if (rc) {

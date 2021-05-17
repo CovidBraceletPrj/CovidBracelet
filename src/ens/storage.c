@@ -7,6 +7,7 @@
 #include <string.h>
 #include <zephyr.h>
 
+#include "ens_error.h"
 #include "ens_fs.h"
 #include "sequencenumber.h"
 #include "storage.h"
@@ -37,7 +38,7 @@ int load_storage_information() {
     // Check, if read what we wanted
     if (rc != size) {
         // Write our initial data to storage
-        rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &record_information, size);
+        int rc = nvs_write(&info_fs, STORED_CONTACTS_INFO_ID, &record_information, size);
         if (rc <= 0) {
             return rc;
         }
@@ -57,19 +58,6 @@ int save_storage_information() {
     }
     k_mutex_unlock(&info_fs_lock);
     return rc;
-}
-
-record_sequence_number_t get_next_sequence_number() {
-    k_mutex_lock(&info_fs_lock, K_FOREVER);
-    if (record_information.count >= MAX_CONTACTS) {
-        record_information.oldest_contact = sn_increment(record_information.oldest_contact);
-    } else {
-        record_information.count++;
-    }
-    save_storage_information();
-    record_sequence_number_t next_sn = get_latest_sequence_number();
-    k_mutex_unlock(&info_fs_lock);
-    return next_sn;
 }
 
 int init_record_storage(void) {
@@ -123,33 +111,63 @@ int load_record(record_t* dest, record_sequence_number_t sn) {
 }
 
 int add_record(record_t* src) {
-    int sectorsToDelete = 1;
+    /**
+     * Some information about the procedure in this function:
+     *      1. we calculate the potential next sn and storage id
+     *      2. we try to write our entry
+     *          2.1 if write was successful, goto 5., otherwise continue at 3.
+     *      3. if our id is already in use, we request the fs to make some space
+     *      4. after making space, we adjust our storage information and try to write again
+     *      5. we actually "increment" our stored contact information
+     *
+     * This order (first erase storage, then increment information) is important, because like this we keep a constant
+     * state of our information about the stored contacts in combination with correct state of our flash.
+     */
 
     k_mutex_lock(&info_fs_lock, K_FOREVER);
 
     // Check, if next sn would be at start of page
-    record_sequence_number_t potential_next_sn = sn_increment(get_latest_sequence_number());
+    record_sequence_number_t potential_next_sn =
+        get_latest_sequence_number() == get_oldest_sequence_number() ? 0 : sn_increment(get_latest_sequence_number());
     storage_id_t potential_next_id = convert_sn_to_storage_id(potential_next_sn);
-    if (((potential_next_id * ens_fs.entry_size) % ens_fs.sector_size) == 0) {
-        // If we are at start of a page, we need to erase it first
-        ens_fs_page_erase(&ens_fs, potential_next_id, sectorsToDelete);
 
-        // if our storage is full, we need to adjust our information about stored records
-        if (get_num_records() == MAX_CONTACTS) {
-            int deletedRecordsCount = (ens_fs.sector_size / ens_fs.entry_size) * sectorsToDelete;
+    // write our entry to flash and check, if the current entry is already in use
+    int rc = ens_fs_write(&ens_fs, potential_next_id, src);
+    // if our error does NOT indicate, that this address is already in use, we just goto end and do nothing
+    if (rc && rc != -ENS_ADDRINU) {
+        // TODO: maybe also increment, if there is an internal error?
+        goto end;
+    } else if (rc == -ENS_ADDRINU) {
+        // the current id is already in use, so make some space for our new entry
+        int deletedRecordsCount = ens_fs_make_space(&ens_fs, potential_next_id);
+        if (deletedRecordsCount < 0) {
+            // some interal error happened (e.g. we are not at a page start)
+            rc = deletedRecordsCount;
+            // we still need to increment our information, so we are not at the exact same id the entire time
+            goto inc;
+        } else if (deletedRecordsCount > 0 && get_num_records() == MAX_CONTACTS) {
             record_information.count -= deletedRecordsCount;
             record_information.oldest_contact = sn_increment_by(record_information.oldest_contact, deletedRecordsCount);
-            save_storage_information();
+        }
+        // after creating some space, try to write again
+        rc = ens_fs_write(&ens_fs, potential_next_id, src);
+        if (rc) {
+            goto inc;
         }
     }
 
-    // Actually increment sn
-    record_sequence_number_t curr_sn = get_next_sequence_number();
-    src->sn = curr_sn;
-    storage_id_t id = convert_sn_to_storage_id(curr_sn);
+inc:
+    // check, how we need to update our storage information
+    if (record_information.count >= MAX_CONTACTS) {
+        record_information.oldest_contact = sn_increment(record_information.oldest_contact);
+    } else {
+        record_information.count++;
+    }
+    save_storage_information();
 
+end:
     k_mutex_unlock(&info_fs_lock);
-    return ens_fs_write(&ens_fs, id, src);
+    return rc;
 }
 
 int delete_record(record_sequence_number_t sn) {
@@ -167,7 +185,6 @@ int delete_record(record_sequence_number_t sn) {
     return rc;
 }
 
-// TODO lome: do we need lock here aswell?
 record_sequence_number_t get_latest_sequence_number() {
     return sn_increment_by(record_information.oldest_contact, record_information.count);
 }
