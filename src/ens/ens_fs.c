@@ -1,4 +1,5 @@
 #include <drivers/flash.h>
+#include <errno.h>
 #include <kernel.h>
 #include <math.h>
 #include <storage/flash_map.h>
@@ -48,6 +49,7 @@ int ens_fs_init(ens_fs_t* fs, uint8_t flash_id, uint64_t entry_size) {
         return -ENS_INTERR;
     }
     memset(ptr, 0, internal_size);
+    fs->buffer = ptr;
 
     // init the lock for the fs
     k_mutex_init(&fs->ens_fs_lock);
@@ -101,21 +103,36 @@ end:
 
 int ens_fs_write(ens_fs_t* fs, uint64_t id, void* data) {
     int rc = 0;
+    uint64_t offset = id * fs->interal_size;
+    uint8_t* obj = fs->buffer;
+
     k_mutex_lock(&fs->ens_fs_lock, K_FOREVER);
+    // read current data in flash...
+    if (flash_area_read(fs->area, offset, obj, fs->interal_size)) {
+        rc = -ENS_INTERR;
+        goto end;
+    }
+    // ...and check, if it's all 1's
+    for (int i = 0; i < fs->entry_size; i++) {
+        if (!(obj[i] & 0xff)) {
+            // if this entry is not all 1's, we return error and exit the function
+            rc = -ENS_ADDRINU;
+            goto end;
+        }
+    }
 
     // copy data into interal buffer
     memcpy(fs->buffer, data, fs->entry_size);
 
     // set CRC and not-deleted-flag
-    uint8_t* obj = fs->buffer;
     obj[fs->entry_size] = crc7_be(SEED, obj, fs->entry_size) | 1;
 
-    uint64_t offset = id * fs->interal_size;
-    if (flash_area_write(fs->area, offset, data, fs->interal_size)) {
+    if (flash_area_write(fs->area, offset, obj, fs->interal_size)) {
         // writing to flash was not successful
         rc = -ENS_INTERR;
     }
 
+end:
     k_mutex_unlock(&fs->ens_fs_lock);
     return rc;
 }
@@ -136,16 +153,23 @@ int ens_fs_delete(ens_fs_t* fs, uint64_t id) {
     return rc;
 }
 
-int ens_fs_page_erase(ens_fs_t* fs, uint64_t entry_id, uint64_t sector_count) {
+uint64_t ens_fs_make_space(ens_fs_t* fs, uint64_t entry_id) {
+    // calculate start and check, if it is at the start of a page
+    uint64_t start = entry_id * fs->interal_size;
+    printk("Erasing from byte %llu\n", start);
+    if ((start % fs->sector_size) != 0) {
+        return -ENS_INVARG;
+    }
+
     int rc = 0;
     k_mutex_lock(&fs->ens_fs_lock, K_FOREVER);
 
-    // calculate the next page start before (or at) the given entry_id
-    uint64_t start = (entry_id - entry_id % fs->sector_size) * fs->interal_size;
-
     // erase given amount of pages, starting for the given offset
-    if (flash_area_erase(fs->area, start, fs->sector_size * sector_count)) {
+    if (flash_area_erase(fs->area, start, fs->sector_size)) {
         rc = -ENS_INTERR;
+    } else {
+        // if we are successful, return amount of deleted entries
+        rc = fs->sector_size / fs->interal_size;
     }
 
     k_mutex_unlock(&fs->ens_fs_lock);

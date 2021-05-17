@@ -14,7 +14,7 @@ typedef struct record {
     rssi_t rssi;                  // TODO: Check correct
     rolling_proximity_identifier_t rolling_proximity_identifier;
     associated_encrypted_metadata_t associated_encrypted_metadata;
-} record_t;
+} __packed record_t;
 
 typedef struct stored_records_information {
     record_sequence_number_t oldest_contact;

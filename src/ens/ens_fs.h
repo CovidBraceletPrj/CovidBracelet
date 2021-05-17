@@ -90,14 +90,13 @@ int ens_fs_write(ens_fs_t* fs, uint64_t id, void* data);
 int ens_fs_delete(ens_fs_t* fs, uint64_t id);
 
 /**
- * Erase a given amount of flash sectors. Starting at offset (if offset is not at page start, it will be rounded down).
+ * Reqeust some free space in flash. Returns -ENS_INVARG, if the given id is not at the start of a page.
  *
  * @param fs file system
- * @param id id of the entry to erase the page for
- * @param sector_count count of sectors to erase
+ * @param id id of the entry to make space for
  *
- * @return 0 on success, -errno otherwise
+ * @return the positive amount of deleted entries, -errno otherwise
  */
-int ens_fs_page_erase(ens_fs_t* fs, uint64_t id, uint64_t sector_count);
+uint64_t ens_fs_make_space(ens_fs_t* fs, uint64_t id);
 
 #endif
