@@ -114,7 +114,7 @@ int ens_fs_write(ens_fs_t* fs, uint64_t id, void* data) {
     }
     // ...and check, if it's all 1's
     for (int i = 0; i < fs->entry_size; i++) {
-        if (!(obj[i] & 0xff)) {
+        if ((obj[i] & 0xff) != 0xff) {
             // if this entry is not all 1's, we return error and exit the function
             rc = -ENS_ADDRINU;
             goto end;
@@ -156,10 +156,11 @@ int ens_fs_delete(ens_fs_t* fs, uint64_t id) {
 uint64_t ens_fs_make_space(ens_fs_t* fs, uint64_t entry_id) {
     // calculate start and check, if it is at the start of a page
     uint64_t start = entry_id * fs->interal_size;
-    printk("Erasing from byte %llu\n", start);
+    printk("requesting erase from byte %llu\n", start);
     if ((start % fs->sector_size) != 0) {
         return -ENS_INVARG;
     }
+    printk("Erasing from byte %llu\n", start);
 
     int rc = 0;
     k_mutex_lock(&fs->ens_fs_lock, K_FOREVER);
