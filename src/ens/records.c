@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "../covid_types.h"
+#include "ens_error.h"
 #include "records.h"
 #include "sequencenumber.h"
 #include "storage.h"
@@ -21,51 +22,64 @@ int ens_records_iterator_init_range(record_iterator_t* iterator,
 /**
  * Find an entry via binary search for the timestamp.
  *
- * @param record pointer to the location, where the loaded record shall be stored
+ * @param record pointer to the location, where the found sn shall be stored
  * @param target timestamp for which to find the nearest entry for
- * @param start lower bound for the binary search
- * @param end upper bound for the binary search
+ * @param greater flag for indicating, if the loaded sn shall correspond to a greater (1) or smaller (0) timestamp
  */
-// TODO lome: maybe add flag for indicating whether older or newer contact shall be loaded
-int find_record_via_binary_search(record_t* record,
-                                  uint32_t target,
-                                  record_sequence_number_t start,
-                                  record_sequence_number_t end) {
-    // TODO lome: 1. handle entries with deleted/invalid data -> load left/right entry
-    // TODO lome: 2. handle possible deadlocks because of 1.
-    // TODO lome: 3. check, if oldest ts is newer than the latest -> return error that needs to be handled by the
-    //              calling function
-    record_t start_record;
-    record_t end_record;
+int find_sn_via_binary_search(record_sequence_number_t* sn_dest, uint32_t target, int greater) {
+    record_sequence_number_t start = get_oldest_sequence_number();
+    record_sequence_number_t end = get_latest_sequence_number();
 
-    // load the initial start and end record
-    int rc = load_record(&start_record, start);
-    if (rc) {
-        return rc;
-    }
-    rc = load_record(&end_record, end);
-    if (rc) {
-        return rc;
-    }
+    record_t dummyRec;
 
     do {
-        // TODO lome: first entry for start, last entry for end
-        // calculate the contact in the middle between start and end and load it
-        record_sequence_number_t middle = (start_record.sn + end_record.sn) / 2;
-        int rc = load_record(record, middle);
+        // calculate the contact in the middle between start and end
+        record_sequence_number_t middle = sn_get_middle_sn(start, end);
+
+        // try to load it
+        int rc = load_record(&dummyRec, middle);
+        if (rc && rc != -ENS_DELENT && rc != -ENS_NOENT) {
+            // if our error is not concerning invalid or deleted entries, we just want to return
+            return rc;
+        } else if (rc == -ENS_DELENT || rc == -ENS_NOENT) {
+            int direction = 1;
+            do {
+                // increment the calculated "middle" by a certain amount, so we can try to load a new entry
+                sn_increment_by(middle, direction);
+                rc = load_record(&dummyRec, middle);
+
+                // alternate around the previously calculated "middle"
+                // this should avoid deadlocks, because we never read an entry twice
+                direction += direction > 0 ? 1 : -1;
+                direction *= -1;
+            } while (middle >= start && middle <= end && (rc == -ENS_DELENT || rc == -ENS_NOENT));
+        }
+
+        // if we still have an error, just return it
         if (rc) {
             return rc;
         }
 
         // determine the new start and end
-        if (record->timestamp > target) {
-            memcpy(&start_record, record, sizeof(record_t));
+        if (dummyRec.timestamp > target) {
+            start = dummyRec.sn;
         } else {
-            memcpy(&end_record, record, sizeof(record_t));
+            end = dummyRec.sn;
         }
 
         // break, if we are at the exact timestamp or our start and end are next to each other
-    } while (record->timestamp != target && (end_record.sn - start_record.sn) > 1);
+    } while (dummyRec.timestamp != target && (end - start) > 1);
+
+    // TODO lome: maybe loop here aswell?
+    // increment/decrement the found sn, depending on the greater flag
+    record_sequence_number_t found = dummyRec.sn;
+    if (dummyRec.timestamp > target && !greater) {
+        found--;
+    } else if (dummyRec.timestamp < target && greater) {
+        found++;
+    }
+
+    *sn_dest = found;
 
     return 0;
 }
@@ -73,46 +87,33 @@ int find_record_via_binary_search(record_t* record,
 // TODO: This iterator does neither check if the sequence numbers wrapped around while iteration. As a result, first
 // results could have later timestamps than following entries
 int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* ts_start, uint32_t* ts_end) {
-    record_sequence_number_t oldest_sn = get_oldest_sequence_number();
-    record_sequence_number_t latest_sn = get_latest_sequence_number();
+    record_sequence_number_t oldest_sn = 0;
+    record_sequence_number_t newest_sn = 0;
 
-    // try to find the oldest contact in our timerange
-    record_t start_rec;
-    int rc = load_record(&start_rec, oldest_sn);
-    if (rc) {
-        return rc;
+    // assure that *ts_end > *ts_start
+    if (ts_start && ts_end && *ts_end < *ts_start) {
+        return 1;
     }
-    // if starting timestamp lies in our bounds, perform binary search
-    // TODO lome: check, if ts_start and ts_end are NULL -> use oldest/latest sn then
-    // TODO lome: move oldest_sn and latest_sn to binary_search function
-    // TODO lome: maybe keep track of the oldest and newest timestamp (optimization for later)
-    if (start_rec.timestamp < *ts_start) {
-        // TODO lome: only "return" sn, not actual record
-        rc = find_record_via_binary_search(&start_rec, *ts_start, oldest_sn, latest_sn);
 
+    if (ts_start) {
+        int rc = find_sn_via_binary_search(&oldest_sn, *ts_start, 1);
         if (rc) {
             return rc;
         }
+    } else {
+        oldest_sn = get_oldest_sequence_number();
     }
 
-    // try to find the newest contact within out timerange
-    record_t end_rec;
-    rc = load_record(&end_rec, latest_sn);
-    if (rc) {
-        return rc;
-    }
-    // if ending timestamp lies in our bounds, perform binary search
-    if (end_rec.timestamp > *ts_end) {
-        rc = find_record_via_binary_search(&end_rec, *ts_end, oldest_sn, latest_sn);
-
+    if (ts_end) {
+        int rc = find_sn_via_binary_search(&newest_sn, *ts_end, 0);
         if (rc) {
             return rc;
         }
+    } else {
+        newest_sn = get_latest_sequence_number();
     }
 
-    ens_records_iterator_init_range(iterator, &start_rec.sn, &end_rec.sn);
-
-    return 0;
+    return ens_records_iterator_init_range(iterator, &oldest_sn, &newest_sn);
 }
 
 record_t* ens_records_iterator_next(record_iterator_t* iter) {
