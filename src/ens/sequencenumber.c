@@ -21,8 +21,8 @@ record_sequence_number_t sn_increment_by(record_sequence_number_t sn, uint32_t a
 
 record_sequence_number_t sn_get_middle_sn(record_sequence_number_t older, record_sequence_number_t newer) {
     if (older < newer) {
-        return (older + newer) / 2;
+        return GET_MASKED_SN(((older + newer) / 2));
+    } else {
+        return GET_MASKED_SN(((older + newer + SN_MASK) / 2));
     }
-
-    // TODO lome: cover case for older > newer
 }
