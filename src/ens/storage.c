@@ -13,7 +13,6 @@
 #include "storage.h"
 
 #define STORED_CONTACTS_INFO_ID 0
-#define MAX_CONTACTS 65536
 
 static struct nvs_fs info_fs;
 static struct k_mutex info_fs_lock;
@@ -24,7 +23,7 @@ static ens_fs_t ens_fs;
 static stored_records_information_t record_information = {.oldest_contact = 0, .count = 0};
 
 inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
-    return (storage_id_t)(sn % MAX_CONTACTS);
+    return (storage_id_t)(sn % CONFIG_ENS_MAX_CONTACTS);
 }
 
 /**
@@ -145,7 +144,7 @@ int add_record(record_t* src) {
             rc = deletedRecordsCount;
             // we still need to increment our information, so we are not at the exact same id the entire time
             goto inc;
-        } else if (deletedRecordsCount > 0 && get_num_records() == MAX_CONTACTS) {
+        } else if (deletedRecordsCount > 0 && get_num_records() == CONFIG_ENS_MAX_CONTACTS) {
             record_information.count -= deletedRecordsCount;
             record_information.oldest_contact = sn_increment_by(record_information.oldest_contact, deletedRecordsCount);
         }
@@ -158,7 +157,7 @@ int add_record(record_t* src) {
 
 inc:
     // check, how we need to update our storage information
-    if (record_information.count >= MAX_CONTACTS) {
+    if (record_information.count >= CONFIG_ENS_MAX_CONTACTS) {
         record_information.oldest_contact = sn_increment(record_information.oldest_contact);
     } else {
         record_information.count++;

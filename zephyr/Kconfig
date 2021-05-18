@@ -1,0 +1,10 @@
+source "$ZEPHYR_BASE/Kconfig.zephyr"
+menu "ENS contact storage"
+
+config ENS_MAX_CONTACTS
+    int "Max contacts in storage"
+    default 2048
+    help
+      The maximum amount of contacts, that can be stored on the devies. Needs to be a power of 2!
+
+endmenu
