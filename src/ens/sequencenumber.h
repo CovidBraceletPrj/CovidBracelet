@@ -2,6 +2,7 @@
 #define SEQUENCENUMBER_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef uint32_t record_sequence_number_t;
 
@@ -12,7 +13,7 @@ typedef uint32_t record_sequence_number_t;
  * @param b second sequence number
  * @return 1, if sequence numbers are equal, 0 otherwise.
  */
-int sn_equal(record_sequence_number_t a, record_sequence_number_t b);
+bool sn_equal(record_sequence_number_t a, record_sequence_number_t b);
 
 /**
  * Increment the given sequence number. Wraps around, if 2^24 is reached.
@@ -21,6 +22,14 @@ int sn_equal(record_sequence_number_t a, record_sequence_number_t b);
  * @return the incremented sequence number
  */
 record_sequence_number_t sn_increment(record_sequence_number_t sn);
+
+/**
+ * Decrement the given sequence number. Wraps around, if 0 is reached.
+ *
+ * @param sn sequence number to increment
+ * @return the incremented sequence number
+ */
+record_sequence_number_t sn_decrement(record_sequence_number_t sn);
 
 /**
  * Increment the given sequence number by a given amount.

@@ -68,4 +68,7 @@ record_sequence_number_t get_oldest_sequence_number();
  */
 uint32_t get_num_records();
 
+
+int get_sequence_number_interval(record_sequence_number_t* oldest, record_sequence_number_t *latest);
+
 #endif

@@ -9,15 +9,43 @@
 int ens_records_iterator_init_range(record_iterator_t* iterator,
                                     record_sequence_number_t* opt_start,
                                     record_sequence_number_t* opt_end) {
-    iterator->sn_next = opt_start ? *opt_start : get_oldest_sequence_number();
-    iterator->sn_end = opt_end ? *opt_end : get_latest_sequence_number();
-    if (get_num_records() == 0) {
-        iterator->finished = true;  // no contacts -> no iteration :)
-    } else {
+
+    // prevent any changes during initialization
+    int rc = get_sequence_number_interval(&iterator->sn_next, &iterator->sn_end);
+    if (rc == 0) {
         iterator->finished = false;
+
+        // we override start and end with the optional values
+        if (opt_start) {
+            iterator->sn_next = *opt_start;
+        }
+        if (opt_end) {
+            iterator->sn_end = *opt_end;
+        }
+    } else {
+        iterator->finished = true;
     }
+
     return 0;
 }
+
+
+
+
+int64_t get_timestamp_for_sn(record_sequence_number_t sn) {
+    record_t rec;
+    if(load_record(&rec, sn) == 0) {
+        return rec.timestamp;
+    } else {
+        return -1;
+    }
+}
+
+
+enum record_timestamp_search_mode {
+    RECORD_TIMESTAMP_SEARCH_MODE_MIN,
+     RECORD_TIMESTAMP_SEARCH_MODE_MAX,
+};
 
 /**
  * Find an entry via binary search for the timestamp.
@@ -26,60 +54,76 @@ int ens_records_iterator_init_range(record_iterator_t* iterator,
  * @param target timestamp for which to find the nearest entry for
  * @param greater flag for indicating, if the loaded sn shall correspond to a greater (1) or smaller (0) timestamp
  */
-int find_sn_via_binary_search(record_sequence_number_t* sn_dest, uint32_t target, int greater) {
-    record_sequence_number_t start = get_oldest_sequence_number();
-    record_sequence_number_t end = get_latest_sequence_number();
+int find_sn_via_binary_search(record_sequence_number_t* sn_dest, uint32_t target, enum record_timestamp_search_mode search_mode) {
 
-    record_t dummyRec;
+    record_sequence_number_t start_sn;
+    record_sequence_number_t end_sn;
 
-    do {
-        // calculate the contact in the middle between start and end
-        record_sequence_number_t middle = sn_get_middle_sn(start, end);
+    // prevent any changes during binary search initialization
 
-        // try to load it
-        int rc = load_record(&dummyRec, middle);
-        if (rc && rc != -ENS_DELENT && rc != -ENS_NOENT) {
-            // if our error is not concerning invalid or deleted entries, we just want to return
-            return rc;
-        } else if (rc == -ENS_DELENT || rc == -ENS_NOENT) {
-            int direction = 1;
-            do {
-                // increment the calculated "middle" by a certain amount, so we can try to load a new entry
-                sn_increment_by(middle, direction);
-                rc = load_record(&dummyRec, middle);
+    int rc = get_sequence_number_interval(&start_sn, &end_sn);
 
-                // alternate around the previously calculated "middle"
-                // this should avoid deadlocks, because we never read an entry twice
-                direction += direction > 0 ? 1 : -1;
-                direction *= -1;
-            } while (middle >= start && middle <= end && (rc == -ENS_DELENT || rc == -ENS_NOENT));
-        }
-
-        // if we still have an error, just return it
-        if (rc) {
-            return rc;
-        }
-
-        // determine the new start and end
-        if (dummyRec.timestamp > target) {
-            start = dummyRec.sn;
-        } else {
-            end = dummyRec.sn;
-        }
-
-        // break, if we are at the exact timestamp or our start and end are next to each other
-    } while (dummyRec.timestamp != target && (end - start) > 1);
-
-    // TODO lome: maybe loop here aswell?
-    // increment/decrement the found sn, depending on the greater flag
-    record_sequence_number_t found = dummyRec.sn;
-    if (dummyRec.timestamp > target && !greater) {
-        found--;
-    } else if (dummyRec.timestamp < target && greater) {
-        found++;
+    if (rc) {
+        return rc;
     }
 
-    *sn_dest = found;
+    record_sequence_number_t last_sn = start_sn; // used to check if ran into issues, e.g. could not load the entry or rounding errors
+
+    while(!sn_equal(start_sn, end_sn)) {
+        // calculate the sn in the middle between start and end
+        record_sequence_number_t cur_sn = sn_get_middle_sn(start_sn, end_sn);
+        
+        if (sn_equal(cur_sn, last_sn)) {
+            // if we already checked this entry -> we reduce our boundaries and try again
+            // this also solves issues with rounding
+            // TODO: This is not the best way...
+            if (search_mode == RECORD_TIMESTAMP_SEARCH_MODE_MIN) {
+                int64_t start_ts = get_timestamp_for_sn(start_sn);
+                if (start_ts == -1 || start_ts < target) {
+                    // we could not load this entry or this entry is strictly smaller than our target
+                    start_sn = sn_increment(start_sn); // we can safely increment as start_sn < end_sn
+                } else {
+                    // we actually found the wanted entry!
+                    end_sn = start_sn; // this will break our loop
+                }
+            } else {
+                // we search for the biggest value among them
+                int64_t end_ts = get_timestamp_for_sn(end_sn);
+                if (end_ts == -1 || end_ts > target) {
+                    // we could not load this entry or this entry is strictly bigger than our target
+                    end_sn = sn_decrement(end_sn); // we can safely decrement as start_sn < end_sn
+                } else {
+                    // we actually found the wanted entry!
+                    start_sn = end_sn; // this will break our loop
+                }
+            }
+        } else {
+
+            int64_t mid_ts = get_timestamp_for_sn(cur_sn);
+
+            if (mid_ts >= 0) {
+                if (target < mid_ts) {
+                    end_sn = cur_sn;
+                } else if (target > mid_ts) {
+                    start_sn = cur_sn;
+                } else {
+                    // target == mid_ts
+                    if (search_mode == RECORD_TIMESTAMP_SEARCH_MODE_MIN) {
+                        // we search for the smallest value among them -> look before this item
+                        end_sn = cur_sn;
+                    } else {
+                        // we search for the biggest value among them -> look after this item
+                        start_sn = cur_sn;
+                    }
+                }
+            } else {
+                // some errors -> we keep the current sn and try to narrow our boundaries
+            }            
+        }
+        last_sn = cur_sn;
+    }
+
+    *sn_dest = start_sn; // == end_sn
 
     return 0;
 }
@@ -96,7 +140,7 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
     }
 
     if (ts_start) {
-        int rc = find_sn_via_binary_search(&oldest_sn, *ts_start, 1);
+        int rc = find_sn_via_binary_search(&oldest_sn, *ts_start, RECORD_TIMESTAMP_SEARCH_MODE_MIN);
         if (rc) {
             return rc;
         }
@@ -105,7 +149,7 @@ int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* t
     }
 
     if (ts_end) {
-        int rc = find_sn_via_binary_search(&newest_sn, *ts_end, 0);
+        int rc = find_sn_via_binary_search(&newest_sn, *ts_end, RECORD_TIMESTAMP_SEARCH_MODE_MAX);
         if (rc) {
             return rc;
         }
