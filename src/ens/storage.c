@@ -22,6 +22,8 @@ static ens_fs_t ens_fs;
 // Information about currently stored contacts
 static stored_records_information_t record_information = {.oldest_contact = 0, .count = 0};
 
+
+
 inline storage_id_t convert_sn_to_storage_id(record_sequence_number_t sn) {
     return (storage_id_t)(sn % CONFIG_ENS_MAX_CONTACTS);
 }
@@ -190,6 +192,25 @@ record_sequence_number_t get_latest_sequence_number() {
 
 record_sequence_number_t get_oldest_sequence_number() {
     return record_information.oldest_contact;
+}
+
+int get_sequence_number_interval(record_sequence_number_t* oldest, record_sequence_number_t *latest) {
+    int ret = -1;
+    // we lock so that the interval is always valid (e.g. not overlapping)
+    k_mutex_lock(&info_fs_lock, K_FOREVER);
+    if (record_information.count > 0) {
+        if (oldest) {
+            *oldest = record_information.oldest_contact;
+        }
+
+        if (latest) {
+            *latest = sn_increment_by(record_information.oldest_contact, record_information.count);
+        }
+
+        ret = 0;
+    }
+    k_mutex_unlock(&info_fs_lock);
+    return ret;
 }
 
 uint32_t get_num_records() {
