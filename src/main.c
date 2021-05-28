@@ -17,6 +17,7 @@
 #include "exposure-notification.h"
 #include "gatt_service.h"
 #include "io.h"
+#include "display.h"
 
 void main(void) {
     int err = 0;
@@ -44,14 +45,6 @@ void main(void) {
         return;
     }
 
-<<<<<<< HEAD
-    /* Initialize the Bluetooth Subsystem */
-    err = bt_enable(NULL);
-    if (err) {
-        printk("Bluetooth init failed (err %d)\n", err);
-        return;
-    }
-=======
 	#ifndef NATIVE_POSIX
 	/* Initialize the Bluetooth Subsystem */
 	err = bt_enable(NULL);
@@ -59,24 +52,15 @@ void main(void) {
 		printk("Bluetooth init failed (err %d)\n", err);
 		return;
 	}
->>>>>>> 523dcb2 (Enable native build)
 
     printk("Bluetooth initialized\n");
 
-<<<<<<< HEAD
-    err = init_gatt();
-    if (err) {
-        printk("init gatt failed(err %d)\n", err);
-        return;
-    }
-=======
 	err = init_gatt();
 	if (err) {
 		printk("init gatt failed(err %d)\n", err);
 		return;
 	}
 	#endif
->>>>>>> 523dcb2 (Enable native build)
 
     err = init_covid();
     if (err) {
@@ -84,8 +68,15 @@ void main(void) {
         return;
     }
 
-    do {
-        do_covid();
-        do_gatt();
-    } while (1);
+	printk("init display\n");
+	err = init_display();
+	if (err) {
+		printk("init display failed (err %d)\n", err);
+	}
+
+	do{
+		do_covid();
+		do_gatt();
+	} while (1);
+	
 }
