@@ -149,7 +149,8 @@ static void test_against_fixtures(void)
 }
 
 static void new_period_key(time_t currentTime)
-{
+{	
+	#ifndef NATIVE_POSIX
 	printk("\n----------------------------------------\n\n");
 	printk("\n----------------------------------------\n\n");
 	printk("*** New Period\n");
@@ -158,6 +159,7 @@ static void new_period_key(time_t currentTime)
 	printk("periodInterval %u\n", periods[current_period_index].periodInterval);
 	en_generate_period_key(&periods[current_period_index].periodKey);
 	period_cnt++;
+	#endif
 }
 
 #if COVID_MEASURE_PERFORMANCE
@@ -360,7 +362,9 @@ int init_covid()
 	check_keys(NULL);
 
 	int err = 0;
+	#ifndef NATIVE_POSIX
 	err = bt_le_scan_start(&scan_param, scan_cb);
+	#endif
 	if (err)
 	{
 		printk("Starting scanning failed (err %d)\n", err);
@@ -376,7 +380,9 @@ int do_covid()
 	//printk("covid start\n");
 
 	int err = 0;
+	#ifndef NATIVE_POSIX
 	err = bt_le_adv_start(BT_LE_ADV_NCONN, ad, ARRAY_SIZE(ad), NULL, 0);
+	#endif
 
 	if (err)
 	{
@@ -386,7 +392,10 @@ int do_covid()
 
 	k_sleep(K_SECONDS(10));
 
+	#ifndef NATIVE_POSIX
 	err = bt_le_adv_stop();
+	#endif
+
 	if (err)
 	{
 		printk("Advertising failed to stop (err %d)\n", err);

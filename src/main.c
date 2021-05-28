@@ -23,6 +23,7 @@ void main(void) {
     printk("Starting Covid Contact Tracer\n");
 
     // first init everything
+	#ifndef NATIVE_POSIX
     // Use custom randomization as the mbdet_tls context initialization messes with the Zeyhr BLE stack.
     err = en_init(sys_csrand_get);
     if (err) {
@@ -35,6 +36,7 @@ void main(void) {
         printk("init storage failed (err %d)\n", err);
         return;
     }
+	#endif
 
     err = init_io();
     if (err) {
@@ -42,20 +44,39 @@ void main(void) {
         return;
     }
 
+<<<<<<< HEAD
     /* Initialize the Bluetooth Subsystem */
     err = bt_enable(NULL);
     if (err) {
         printk("Bluetooth init failed (err %d)\n", err);
         return;
     }
+=======
+	#ifndef NATIVE_POSIX
+	/* Initialize the Bluetooth Subsystem */
+	err = bt_enable(NULL);
+	if (err) {
+		printk("Bluetooth init failed (err %d)\n", err);
+		return;
+	}
+>>>>>>> 523dcb2 (Enable native build)
 
     printk("Bluetooth initialized\n");
 
+<<<<<<< HEAD
     err = init_gatt();
     if (err) {
         printk("init gatt failed(err %d)\n", err);
         return;
     }
+=======
+	err = init_gatt();
+	if (err) {
+		printk("init gatt failed(err %d)\n", err);
+		return;
+	}
+	#endif
+>>>>>>> 523dcb2 (Enable native build)
 
     err = init_covid();
     if (err) {
