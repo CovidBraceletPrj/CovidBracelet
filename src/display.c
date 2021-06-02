@@ -1,16 +1,15 @@
+#ifdef DISPLAY
 #include <device.h>
 #include <drivers/display.h>
 #include <lvgl.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <zephyr.h>
 
 #include "display.h"
 
-#define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
-#include <logging/log.h>
-LOG_MODULE_REGISTER(app);
-
+#ifdef DISPLAY
 const struct device* display_dev;
 lv_obj_t* display_center_pane;
 lv_obj_t* display_top_bar;
@@ -26,6 +25,7 @@ lv_obj_t* display_msg_label;
 lv_style_t green_button_style;
 lv_style_t yellow_button_style;
 lv_style_t red_button_style;
+#endif
 
 int get_battery_percentage() {
 	return 74;
@@ -50,6 +50,7 @@ int get_risk_contacts() {
 }
 
 int init_styles() {
+	#ifdef DISPLAY
 	lv_style_init(&green_button_style);
 	lv_style_init(&yellow_button_style);
 	lv_style_init(&red_button_style);
@@ -71,7 +72,7 @@ int init_styles() {
 	lv_style_set_text_color(&yellow_button_style, LV_STATE_DEFAULT, LV_COLOR_BLACK);
 	lv_style_set_bg_color(&red_button_style, LV_STATE_DEFAULT, LV_COLOR_RED);
 	lv_style_set_text_color(&red_button_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-
+	#endif
 	return 0;
 }
 
@@ -79,26 +80,27 @@ int update_display() {
 
 	display_set_contacts(get_contacts());
 	display_set_risk_contacts(get_risk_contacts());
-	int time = get_time();
-	lv_label_set_text_fmt(display_clock_label, "%d:%02d", (time / 100) % 100, time % 100);
+	display_set_time(get_time());
 	display_set_bat(get_battery_percentage());
 	display_set_mem(get_memory_percentage());
 
+	#ifdef DISPLAY
     lv_task_handler();
+	#endif
 
 	return 0;
 }
 
 int init_display() {
+	#ifdef DISPLAY
 
 	init_styles();
 
-	#ifdef DISPLAY
 
 	display_dev = device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
 
 	if (display_dev == NULL) {
-		LOG_ERR("device not found.  Aborting test.");
+		printk("device not found.  Aborting test.");
 		return -1;
 	}
 
@@ -166,6 +168,10 @@ int display_set_message(char* msg) {
 	#ifdef DISPLAY
 	lv_label_set_text(display_msg_label, msg);
 	#endif
+	return 0;
+}
+
+int display_set_time(int time) {
 	return 0;
 }
 

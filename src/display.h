@@ -7,7 +7,7 @@ int update_display();
 
 int display_set_message(char* msg);
 
-int display_set_time();
+int display_set_time(int time);
 
 int display_set_bat(int bat);
 
