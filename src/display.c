@@ -5,6 +5,8 @@
 #include <string.h>
 #include <zephyr.h>
 
+#include "display.h"
+
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <logging/log.h>
 LOG_MODULE_REGISTER(app);
@@ -74,50 +76,13 @@ int init_styles() {
 }
 
 int update_display() {
-	static char display_contacts_str[30] = {0};
-	static char display_risk_contacts_str[30] = {0};
-	static char display_clock_str[6] = {0};
-	static char display_battery_str[10] = {0};
-	static char display_memory_str[10] = {0};
 
-	printk("Update display\n");
-	sprintf(display_contacts_str, "%d Kontakte erkannt, davon", get_contacts());
-	lv_label_set_text(display_contacts_label, display_contacts_str);
-
-	int risk_contacts = get_risk_contacts();
-	if (risk_contacts == 0) {
-		sprintf(display_risk_contacts_str, "keine Risiko-Kontakte");
-	} else if (risk_contacts == 1) {
-		sprintf(display_risk_contacts_str, "1 Risiko-Kontakt");
-	} else {
-		sprintf(display_risk_contacts_str, "%d Risiko-Kontakte", risk_contacts);
-	}
-	lv_label_set_text(display_risk_contacts_label, display_risk_contacts_str);
-	
-	if (risk_contacts == 0) {
-		// Set Button green
-		lv_obj_reset_style_list(risk_contacts_button, LV_OBJ_PART_MAIN);
-		lv_obj_add_style(risk_contacts_button, LV_BTN_PART_MAIN, &green_button_style);
-	} else if (risk_contacts < 5) {
-		// Set Button yellow
-		lv_obj_reset_style_list(risk_contacts_button, LV_OBJ_PART_MAIN);
-		lv_obj_add_style(risk_contacts_button, LV_BTN_PART_MAIN, &yellow_button_style);
-	} else {
-		// Set Button red
-		lv_obj_reset_style_list(risk_contacts_button, LV_OBJ_PART_MAIN);
-		lv_obj_add_style(risk_contacts_button, LV_BTN_PART_MAIN, &red_button_style);
-	}
-
-
+	display_set_contacts(get_contacts());
+	display_set_risk_contacts(get_risk_contacts());
 	int time = get_time();
-	sprintf(display_clock_str, "%d:%02d", (time / 100) % 100, time % 100);
-	lv_label_set_text(display_clock_label, display_clock_str);
-
-	sprintf(display_battery_str, "Bat: %d%%", get_battery_percentage());
-	lv_label_set_text(display_battery_label, display_battery_str);
-
-	sprintf(display_memory_str, "Mem: %d%%", get_memory_percentage());
-	lv_label_set_text(display_memory_label, display_memory_str);
+	lv_label_set_text_fmt(display_clock_label, "%d:%02d", (time / 100) % 100, time % 100);
+	display_set_bat(get_battery_percentage());
+	display_set_mem(get_memory_percentage());
 
     lv_task_handler();
 
@@ -127,6 +92,8 @@ int update_display() {
 int init_display() {
 
 	init_styles();
+
+	#ifdef DISPLAY
 
 	display_dev = device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
 
@@ -159,7 +126,6 @@ int init_display() {
 
 
 	if (IS_ENABLED(CONFIG_LVGL_POINTER_KSCAN)) {
-
 		risk_contacts_button = lv_btn_create(display_center_pane, NULL);
 		lv_btn_set_fit(risk_contacts_button, LV_FIT_TIGHT);
 		display_risk_contacts_label = lv_label_create(risk_contacts_button, NULL);
@@ -191,11 +157,66 @@ int init_display() {
 
 	lv_task_handler();
 	display_blanking_off(display_dev);
+	#endif
 
 	return 0;
 }
 
 int display_set_message(char* msg) {
+	#ifdef DISPLAY
 	lv_label_set_text(display_msg_label, msg);
+	#endif
+	return 0;
+}
+
+int display_set_bat(int bat) {
+	#ifdef DISPLAY
+	lv_label_set_text_fmt(display_battery_label, "Bat: %d%%", bat);
+	#endif
+	return 0;
+}
+
+int display_set_mem(int mem) {
+	#ifdef DISPLAY
+	lv_label_set_text_fmt(display_memory_label, "Mem: %d%%", mem);
+	#endif
+	return 0;
+}
+
+int display_set_contacts(int contacts) {
+	#ifdef DISPLAY
+	if (contacts == 1) {
+		lv_label_set_text_fmt(display_contacts_label, "%d Kontakt erkannt, davon", contacts);
+	} else {
+		lv_label_set_text_fmt(display_contacts_label, "%d Kontakte erkannt, davon", contacts);
+	}
+	#endif
+	return 0;
+}
+
+int display_set_risk_contacts(int risk_contacts) {
+	#ifdef DISPLAY
+	if (risk_contacts == 0) {
+		lv_label_set_text(display_risk_contacts_label, "keine Risiko-Kontakte");
+	} else if (risk_contacts == 1) {
+		lv_label_set_text(display_risk_contacts_label, "1 Risiko-Kontakt");
+	} else {
+		lv_label_set_text_fmt(display_risk_contacts_label, "%d Risiko-Kontakte", risk_contacts);
+	}
+	
+	if (risk_contacts == 0) {
+		// Set Button green
+		lv_obj_reset_style_list(risk_contacts_button, LV_OBJ_PART_MAIN);
+		lv_obj_add_style(risk_contacts_button, LV_BTN_PART_MAIN, &green_button_style);
+	} else if (risk_contacts < 5) {
+		// Set Button yellow
+		lv_obj_reset_style_list(risk_contacts_button, LV_OBJ_PART_MAIN);
+		lv_obj_add_style(risk_contacts_button, LV_BTN_PART_MAIN, &yellow_button_style);
+	} else {
+		// Set Button red
+		lv_obj_reset_style_list(risk_contacts_button, LV_OBJ_PART_MAIN);
+		lv_obj_add_style(risk_contacts_button, LV_BTN_PART_MAIN, &red_button_style);
+	}
+	#endif
 	return 0;
 }
