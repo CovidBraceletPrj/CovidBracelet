@@ -27,10 +27,6 @@ record_sequence_number_t sn_increment_by(record_sequence_number_t sn, uint32_t a
     return GET_MASKED_SN((sn + amount));
 }
 
-record_sequence_number_t sn_decrement_by(record_sequence_number_t sn, uint32_t amount) {
-    return sn_increment_by(sn, (SN_MASK+1)-amount);
-}
-
 record_sequence_number_t sn_get_middle_sn(record_sequence_number_t older, record_sequence_number_t newer) {
     if (older <= newer) {
         return GET_MASKED_SN(((older + newer) / 2));
