@@ -5,6 +5,8 @@ int init_display();
 
 int update_display();
 
+void display_thread(void*, void*, void*);
+
 int display_set_message(char* msg);
 
 int display_set_time(int time);
