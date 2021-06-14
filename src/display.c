@@ -27,6 +27,15 @@ lv_style_t yellow_button_style;
 lv_style_t red_button_style;
 #endif
 
+void display_thread(void* arg1, void* arg2, void* arg3) {
+	#ifdef DISPLAY
+	while (1) {
+		lv_task_handler();
+		k_msleep(10);
+	}
+	#endif
+}
+
 int get_battery_percentage() {
 	return 74;
 }

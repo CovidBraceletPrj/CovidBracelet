@@ -19,6 +19,8 @@
 #include "io.h"
 #include "display.h"
 
+K_THREAD_STACK_DEFINE(display_stack_area, 500);
+
 void main(void) {
     int err = 0;
     printk("Starting Covid Contact Tracer\n");
@@ -73,7 +75,10 @@ void main(void) {
 	if (err) {
 		printk("init display failed (err %d)\n", err);
 	}
-
+    
+    struct k_thread display_thread_data;
+    k_tid_t display_tid = k_thread_create(&display_thread_data, display_stack_area, K_THREAD_STACK_SIZEOF(display_stack_area), display_thread, NULL, NULL, NULL, 0, 0, K_NO_WAIT);
+    
 	do{
 		do_covid();
 		do_gatt();
