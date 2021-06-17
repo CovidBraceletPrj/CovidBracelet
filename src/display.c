@@ -169,10 +169,10 @@ int init_display() {
 	return 0;
 }
 
+#ifdef DISPLAY
+
 int display_set_message(char* msg) {
-	#ifdef DISPLAY
 	lv_label_set_text(display_msg_label, msg);
-	#endif
 	return 0;
 }
 
@@ -181,39 +181,22 @@ int display_set_time(int time) {
 }
 
 int display_set_bat(int bat) {
-	#ifdef DISPLAY
 	lv_label_set_text_fmt(display_battery_label, "Bat: %d%%", bat);
-	#endif
 	return 0;
 }
 
 int display_set_mem(int mem) {
-	#ifdef DISPLAY
 	lv_label_set_text_fmt(display_memory_label, "Mem: %d%%", mem);
-	#endif
 	return 0;
 }
 
 int display_set_contacts(int contacts) {
-	#ifdef DISPLAY
-	if (contacts == 1) {
-		lv_label_set_text_fmt(display_contacts_label, "%d Kontakt erkannt, davon", contacts);
-	} else {
-		lv_label_set_text_fmt(display_contacts_label, "%d Kontakte erkannt, davon", contacts);
-	}
-	#endif
+	lv_label_set_text_fmt(display_contacts_label, "Number of registered contacts %d, from which", contacts);
 	return 0;
 }
 
 int display_set_risk_contacts(int risk_contacts) {
-	#ifdef DISPLAY
-	if (risk_contacts == 0) {
-		lv_label_set_text(display_risk_contacts_label, "keine Risiko-Kontakte");
-	} else if (risk_contacts == 1) {
-		lv_label_set_text(display_risk_contacts_label, "1 Risiko-Kontakt");
-	} else {
-		lv_label_set_text_fmt(display_risk_contacts_label, "%d Risiko-Kontakte", risk_contacts);
-	}
+	lv_label_set_text_fmt(display_risk_contacts_label, "%d are risk contacts.", risk_contacts);
 	
 	if (risk_contacts == 0) {
 		// Set Button green
@@ -228,6 +211,33 @@ int display_set_risk_contacts(int risk_contacts) {
 		lv_obj_reset_style_list(risk_contacts_button, LV_OBJ_PART_MAIN);
 		lv_obj_add_style(risk_contacts_button, LV_BTN_PART_MAIN, &red_button_style);
 	}
-	#endif
 	return 0;
 }
+
+#else
+
+int display_set_message(char* msg) {
+	return 0;
+}
+
+int display_set_time(int time) {
+	return 0;
+}
+
+int display_set_bat(int bat) {
+	return 0;
+}
+
+int display_set_mem(int mem) {
+	return 0;
+}
+
+int display_set_contacts(int contacts) {
+	return 0;
+}
+
+int display_set_risk_contacts(int risk_contacts) {
+	return 0;
+}
+
+#endif
