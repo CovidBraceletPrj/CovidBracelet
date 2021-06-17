@@ -19,6 +19,10 @@
 #include "io.h"
 #include "display.h"
 
+#ifndef BLUETOOTH
+#define BLUETOOTH 1
+#endif
+
 K_THREAD_STACK_DEFINE(display_stack_area, 500);
 
 void main(void) {
@@ -47,7 +51,7 @@ void main(void) {
         return;
     }
 
-	#ifndef NATIVE_POSIX
+	#if BLUETOOTH
 	/* Initialize the Bluetooth Subsystem */
 	err = bt_enable(NULL);
 	if (err) {
