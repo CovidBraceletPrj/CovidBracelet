@@ -17,7 +17,6 @@ lv_obj_t* display_bot_bar;
 lv_obj_t* display_contacts_label;
 lv_obj_t* display_risk_contacts_label;
 lv_obj_t* risk_contacts_button;
-lv_obj_t* display_count_label;
 lv_obj_t* display_clock_label;
 lv_obj_t* display_battery_label;
 lv_obj_t* display_memory_label;
@@ -37,25 +36,28 @@ void display_thread(void* arg1, void* arg2, void* arg3) {
 }
 
 int get_battery_percentage() {
-	return 74;
+	// TODO: Implement
+	return 0;
 }
 
 int get_memory_percentage() {
-	return 32;
+	// TODO: Implement
+	return 0;
 }
 
 int get_time() {
-	return 1200;
+	// TODO: Implement
+	return 0;
 }
 
 int get_contacts() {
-	return 314;
+	// TODO: Implement
+	return 0;
 }
 
-int risk_contacts = 0;
-
 int get_risk_contacts() {
-	return risk_contacts++;
+	// TODO: Implement
+	return 0;
 }
 
 int init_styles() {
@@ -64,6 +66,7 @@ int init_styles() {
 	lv_style_init(&yellow_button_style);
 	lv_style_init(&red_button_style);
 
+	// Properties for all styles
 	lv_style_set_bg_opa(&green_button_style, LV_STATE_DEFAULT, LV_OPA_COVER);
 	lv_style_set_pad_top(&green_button_style, LV_STATE_DEFAULT, 10);
 	lv_style_set_pad_bottom(&green_button_style, LV_STATE_DEFAULT, 10);
@@ -75,6 +78,7 @@ int init_styles() {
 	lv_style_copy(&yellow_button_style, &green_button_style);
 	lv_style_copy(&red_button_style, &green_button_style);
 	
+	// Set different colors
 	lv_style_set_bg_color(&green_button_style, LV_STATE_DEFAULT, LV_COLOR_GREEN);
 	lv_style_set_text_color(&green_button_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
 	lv_style_set_bg_color(&yellow_button_style, LV_STATE_DEFAULT, LV_COLOR_YELLOW);
@@ -86,7 +90,6 @@ int init_styles() {
 }
 
 int update_display() {
-
 	display_set_contacts(get_contacts());
 	display_set_risk_contacts(get_risk_contacts());
 	display_set_time(get_time());
@@ -102,9 +105,7 @@ int update_display() {
 
 int init_display() {
 	#ifdef DISPLAY
-
 	init_styles();
-
 
 	display_dev = device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
 
@@ -129,12 +130,9 @@ int init_display() {
 
 	lv_obj_align(display_bot_bar, display_center_pane, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
 
-
 	display_contacts_label = lv_label_create(display_center_pane, NULL);
 	lv_obj_set_height_margin(display_contacts_label, 20);
 	lv_label_set_text(display_contacts_label, "");
-
-
 
 	if (IS_ENABLED(CONFIG_LVGL_POINTER_KSCAN)) {
 		risk_contacts_button = lv_btn_create(display_center_pane, NULL);
@@ -151,11 +149,9 @@ int init_display() {
 	lv_obj_set_width_margin(display_memory_label, 10);
 	lv_label_set_text(display_memory_label, "");
 
-
 	display_clock_label = lv_label_create(display_top_bar, NULL);
 	lv_obj_set_width_margin(display_clock_label, 10);
 	lv_label_set_text(display_clock_label, "");
-
 
 	display_battery_label = lv_label_create(display_top_bar, NULL);
 	lv_obj_set_width_margin(display_battery_label, 10);
