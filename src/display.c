@@ -57,10 +57,11 @@ int get_risk_contacts() {
 #ifdef DISPLAY
 
 void display_thread(void* arg1, void* arg2, void* arg3) {
+	static uint32_t sleep_time;
 	while (1) {
-		lv_task_handler();		
+		sleep_time = lv_task_handler();		
 		update_display();
-		k_msleep(10);
+		k_msleep(sleep_time);
 	}
 }
 
