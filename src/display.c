@@ -28,15 +28,6 @@ lv_style_t yellow_button_style;
 lv_style_t red_button_style;
 #endif
 
-void display_thread(void* arg1, void* arg2, void* arg3) {
-	#ifdef DISPLAY
-	while (1) {
-		lv_task_handler();		
-		update_display();
-		k_msleep(10);
-	}
-	#endif
-}
 
 int get_battery_percentage() {
 	// TODO: Implement
@@ -63,8 +54,17 @@ int get_risk_contacts() {
 	return 0;
 }
 
+#ifdef DISPLAY
+
+void display_thread(void* arg1, void* arg2, void* arg3) {
+	while (1) {
+		lv_task_handler();		
+		update_display();
+		k_msleep(10);
+	}
+}
+
 int init_styles() {
-	#ifdef DISPLAY
 	lv_style_init(&green_button_style);
 	lv_style_init(&yellow_button_style);
 	lv_style_init(&red_button_style);
@@ -88,7 +88,7 @@ int init_styles() {
 	lv_style_set_text_color(&yellow_button_style, LV_STATE_DEFAULT, LV_COLOR_BLACK);
 	lv_style_set_bg_color(&red_button_style, LV_STATE_DEFAULT, LV_COLOR_RED);
 	lv_style_set_text_color(&red_button_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-	#endif
+
 	return 0;
 }
 
@@ -99,15 +99,12 @@ int update_display() {
 	display_set_bat(get_battery_percentage());
 	display_set_mem(get_memory_percentage());
 
-	#ifdef DISPLAY
     lv_task_handler();
-	#endif
 
 	return 0;
 }
 
 int init_display() {
-	#ifdef DISPLAY
 	init_styles();
 
 	display_dev = device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
@@ -167,12 +164,9 @@ int init_display() {
     k_thread_create(&display_thread_data, display_stack_area, K_THREAD_STACK_SIZEOF(display_stack_area), display_thread, NULL, NULL, NULL, 0, 0, K_NO_WAIT);
 
 	display_blanking_off(display_dev);
-	#endif
 
 	return 0;
 }
-
-#ifdef DISPLAY
 
 int display_set_message(char* msg) {
 	lv_label_set_text(display_msg_label, msg);
@@ -218,6 +212,22 @@ int display_set_risk_contacts(int risk_contacts) {
 }
 
 #else
+
+void display_thread(void* arg1, void* arg2, void* arg3) {
+	// Do nothing
+}
+
+int init_styles() {
+	return 0;
+}
+
+int update_display() {
+	return 0;
+}
+
+int init_display() {
+	return 0;
+}
 
 int display_set_message(char* msg) {
 	return 0;
