@@ -19,11 +19,6 @@
 #include "io.h"
 #include "display.h"
 
-#ifndef BLUETOOTH
-#define BLUETOOTH 1
-#endif
-
-K_THREAD_STACK_DEFINE(display_stack_area, 500);
 
 void main(void) {
     int err = 0;
@@ -37,13 +32,15 @@ void main(void) {
         printk("Cyrpto init failed (err %d)\n", err);
         return;
     }
+	#endif
 
+    #if CONFIG_FLASH
     err = init_record_storage();
     if (err) {
         printk("init storage failed (err %d)\n", err);
         return;
     }
-	#endif
+    #endif
 
     err = init_io();
     if (err) {
@@ -51,7 +48,7 @@ void main(void) {
         return;
     }
 
-	#if BLUETOOTH
+	#if CONFIG_BT
 	/* Initialize the Bluetooth Subsystem */
 	err = bt_enable(NULL);
 	if (err) {
@@ -79,9 +76,7 @@ void main(void) {
 	if (err) {
 		printk("init display failed (err %d)\n", err);
 	}
-    
-    struct k_thread display_thread_data;
-    k_tid_t display_tid = k_thread_create(&display_thread_data, display_stack_area, K_THREAD_STACK_SIZEOF(display_stack_area), display_thread, NULL, NULL, NULL, 0, 0, K_NO_WAIT);
+
     
 	do{
 		do_covid();

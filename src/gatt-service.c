@@ -73,6 +73,8 @@ int init_gatt(void)
 	return 0;
 }
 
+#if CONFIG_BT
+
 int do_gatt(void){
 	//printk("gatt start\n");
 	int err;
@@ -94,3 +96,11 @@ int do_gatt(void){
 	//printk("gatt end\n");
 	return 0;
 }
+
+#else
+
+int do_gatt(void) {
+	return 0;
+}
+
+#endif

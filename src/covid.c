@@ -362,7 +362,7 @@ int init_covid()
 	check_keys(NULL);
 
 	int err = 0;
-	#ifndef NATIVE_POSIX
+	#if CONFIG_BT
 	err = bt_le_scan_start(&scan_param, scan_cb);
 	#endif
 	if (err)
@@ -380,7 +380,7 @@ int do_covid()
 	//printk("covid start\n");
 
 	int err = 0;
-	#ifndef NATIVE_POSIX
+	#if CONFIG_BT
 	err = bt_le_adv_start(BT_LE_ADV_NCONN, ad, ARRAY_SIZE(ad), NULL, 0);
 	#endif
 
@@ -392,7 +392,7 @@ int do_covid()
 
 	k_sleep(K_SECONDS(10));
 
-	#ifndef NATIVE_POSIX
+	#if CONFIG_BT
 	err = bt_le_adv_stop();
 	#endif
 

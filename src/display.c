@@ -9,6 +9,8 @@
 
 #include "display.h"
 
+K_THREAD_STACK_DEFINE(display_stack_area, 5000);
+
 #ifdef DISPLAY
 const struct device* display_dev;
 lv_obj_t* display_center_pane;
@@ -29,7 +31,8 @@ lv_style_t red_button_style;
 void display_thread(void* arg1, void* arg2, void* arg3) {
 	#ifdef DISPLAY
 	while (1) {
-		lv_task_handler();
+		lv_task_handler();		
+		update_display();
 		k_msleep(10);
 	}
 	#endif
@@ -159,10 +162,10 @@ int init_display() {
 
 	display_msg_label = lv_label_create(display_bot_bar, NULL);
 	lv_label_set_text(display_msg_label, "");
-	
-	update_display();
 
-	lv_task_handler();
+    static struct k_thread display_thread_data;
+    k_thread_create(&display_thread_data, display_stack_area, K_THREAD_STACK_SIZEOF(display_stack_area), display_thread, NULL, NULL, NULL, 0, 0, K_NO_WAIT);
+
 	display_blanking_off(display_dev);
 	#endif
 
@@ -191,7 +194,7 @@ int display_set_mem(int mem) {
 }
 
 int display_set_contacts(int contacts) {
-	lv_label_set_text_fmt(display_contacts_label, "Number of registered contacts %d, from which", contacts);
+	lv_label_set_text_fmt(display_contacts_label, "Number of contacts: %d,\nfrom which", contacts);
 	return 0;
 }
 

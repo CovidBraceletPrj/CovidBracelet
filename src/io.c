@@ -85,24 +85,21 @@
 static struct gpio_callback button_0_cb_data;
 static struct gpio_callback button_1_cb_data;
 
+#ifndef NATIVE_POSIX
+
 void button_0_pressed(struct device *dev, struct gpio_callback *cb, uint32_t pins){
-    #ifndef NATIVE_POSIX
     set_infection(true);
     gpio_pin_set(dev, PIN, (int)1);
     printk("Button 0 (=infected) pressed at %" PRIu32 "\n", k_cycle_get_32());
-    #endif
 }
 
 void button_1_pressed(struct device *dev, struct gpio_callback *cb, uint32_t pins){
-    #ifndef NATIVE_POSIX
     set_infection(false);
     gpio_pin_set(dev, PIN, (int)0);
     printk("Button 1 (=healthy) pressed at %" PRIu32 "\n", k_cycle_get_32());
-    #endif
 }
 
 int init_io(){
-    #ifndef NATIVE_POSIX
     struct device *button0, *button1;
     int err = 0;
     //struct device *led;
@@ -172,6 +169,21 @@ int init_io(){
     }
     //Turn LED 0 off
     gpio_pin_set(dev, PIN, (int)0);
-    #endif
     return 0;
 }
+
+#else
+
+void button_0_pressed(struct device *dev, struct gpio_callback *cb, uint32_t pins) {
+    // Do nothing
+}
+
+void button_1_pressed(struct device *dev, struct gpio_callback *cb, uint32_t pins) {
+    // Do nothing
+}
+
+int init_io(){ 
+    return 0;
+}
+
+#endif
