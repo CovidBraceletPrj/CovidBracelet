@@ -1,4 +1,4 @@
-#ifdef DISPLAY
+#if CONFIG_DISPLAY
 #include <device.h>
 #include <drivers/display.h>
 #include <lvgl.h>
@@ -11,7 +11,7 @@
 
 K_THREAD_STACK_DEFINE(display_stack_area, 5000);
 
-#ifdef DISPLAY
+#if CONFIG_DISPLAY
 const struct device* display_dev;
 lv_obj_t* display_center_pane;
 lv_obj_t* display_top_bar;
@@ -54,7 +54,7 @@ int get_risk_contacts() {
 	return 0;
 }
 
-#ifdef DISPLAY
+#if CONFIG_DISPLAY
 
 void display_thread(void* arg1, void* arg2, void* arg3) {
 	static uint32_t sleep_time;
