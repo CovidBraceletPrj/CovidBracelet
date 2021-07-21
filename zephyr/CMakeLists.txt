@@ -15,7 +15,7 @@ if(DEFINED NATIVE_POSIX)
     endif ()
     target_include_directories(app PUBLIC ${exposure-notification_SOURCE_DIR}/include)
 
-    FILE(GLOB app_sources ../src/*.c* ${exposure-notification_SOURCE_DIR}/src/*.c*)
+    FILE(GLOB app_sources ../src/*.c* ../src/ens/*.c* ${exposure-notification_SOURCE_DIR}/src/*.c*)
 else()
     FILE(GLOB app_sources ../src/*.c*)
 endif()
