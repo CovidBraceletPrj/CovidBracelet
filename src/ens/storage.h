@@ -23,9 +23,11 @@ typedef struct stored_records_information {
 
 /**
  * Initializes the contact storage component
+ * @param clean flag for indicating, if storage shall be init with clean state
+ *
  * @return 0 for success
  */
-int init_record_storage();
+int init_record_storage(bool clean);
 
 /**
  * Loads the record with number sn into the destination struct

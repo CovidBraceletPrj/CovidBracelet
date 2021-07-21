@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include <sys/types.h>
 #include "../covid_types.h"
 #include "ens_error.h"
 #include "records.h"
@@ -9,7 +10,6 @@
 int ens_records_iterator_init_range(record_iterator_t* iterator,
                                     record_sequence_number_t* opt_start,
                                     record_sequence_number_t* opt_end) {
-
     // prevent any changes during initialization
     int rc = get_sequence_number_interval(&iterator->sn_next, &iterator->sn_end);
     if (rc == 0) {
@@ -29,22 +29,18 @@ int ens_records_iterator_init_range(record_iterator_t* iterator,
     return 0;
 }
 
-
-
-
 int64_t get_timestamp_for_sn(record_sequence_number_t sn) {
     record_t rec;
-    if(load_record(&rec, sn) == 0) {
+    if (load_record(&rec, sn) == 0) {
         return rec.timestamp;
     } else {
         return -1;
     }
 }
 
-
 enum record_timestamp_search_mode {
     RECORD_TIMESTAMP_SEARCH_MODE_MIN,
-     RECORD_TIMESTAMP_SEARCH_MODE_MAX,
+    RECORD_TIMESTAMP_SEARCH_MODE_MAX,
 };
 
 /**
@@ -54,8 +50,9 @@ enum record_timestamp_search_mode {
  * @param target timestamp for which to find the nearest entry for
  * @param greater flag for indicating, if the loaded sn shall correspond to a greater (1) or smaller (0) timestamp
  */
-int find_sn_via_binary_search(record_sequence_number_t* sn_dest, uint32_t target, enum record_timestamp_search_mode search_mode) {
-
+int find_sn_via_binary_search(record_sequence_number_t* sn_dest,
+                              uint32_t target,
+                              enum record_timestamp_search_mode search_mode) {
     record_sequence_number_t start_sn;
     record_sequence_number_t end_sn;
 
@@ -67,12 +64,13 @@ int find_sn_via_binary_search(record_sequence_number_t* sn_dest, uint32_t target
         return rc;
     }
 
-    record_sequence_number_t last_sn = start_sn; // used to check if ran into issues, e.g. could not load the entry or rounding errors
+    record_sequence_number_t last_sn =
+        start_sn;  // used to check if ran into issues, e.g. could not load the entry or rounding errors
 
-    while(!sn_equal(start_sn, end_sn)) {
+    while (!sn_equal(start_sn, end_sn)) {
         // calculate the sn in the middle between start and end
         record_sequence_number_t cur_sn = sn_get_middle_sn(start_sn, end_sn);
-        
+
         if (sn_equal(cur_sn, last_sn)) {
             // if we already checked this entry -> we reduce our boundaries and try again
             // this also solves issues with rounding
@@ -81,24 +79,23 @@ int find_sn_via_binary_search(record_sequence_number_t* sn_dest, uint32_t target
                 int64_t start_ts = get_timestamp_for_sn(start_sn);
                 if (start_ts == -1 || start_ts < target) {
                     // we could not load this entry or this entry is strictly smaller than our target
-                    start_sn = sn_increment(start_sn); // we can safely increment as start_sn < end_sn
+                    start_sn = sn_increment(start_sn);  // we can safely increment as start_sn < end_sn
                 } else {
                     // we actually found the wanted entry!
-                    end_sn = start_sn; // this will break our loop
+                    end_sn = start_sn;  // this will break our loop
                 }
             } else {
                 // we search for the biggest value among them
                 int64_t end_ts = get_timestamp_for_sn(end_sn);
                 if (end_ts == -1 || end_ts > target) {
                     // we could not load this entry or this entry is strictly bigger than our target
-                    end_sn = sn_decrement(end_sn); // we can safely decrement as start_sn < end_sn
+                    end_sn = sn_decrement(end_sn);  // we can safely decrement as start_sn < end_sn
                 } else {
                     // we actually found the wanted entry!
-                    start_sn = end_sn; // this will break our loop
+                    start_sn = end_sn;  // this will break our loop
                 }
             }
         } else {
-
             int64_t mid_ts = get_timestamp_for_sn(cur_sn);
 
             if (mid_ts >= 0) {
@@ -118,19 +115,19 @@ int find_sn_via_binary_search(record_sequence_number_t* sn_dest, uint32_t target
                 }
             } else {
                 // some errors -> we keep the current sn and try to narrow our boundaries
-            }            
+            }
         }
         last_sn = cur_sn;
     }
 
-    *sn_dest = start_sn; // == end_sn
+    *sn_dest = start_sn;  // == end_sn
 
     return 0;
 }
 
 // TODO: This iterator does neither check if the sequence numbers wrapped around while iteration. As a result, first
 // results could have later timestamps than following entries
-int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* ts_start, uint32_t* ts_end) {
+int ens_records_iterator_init_timerange(record_iterator_t* iterator, time_t* ts_start, time_t* ts_end) {
     record_sequence_number_t oldest_sn = 0;
     record_sequence_number_t newest_sn = 0;
 
