@@ -26,7 +26,7 @@ int ens_records_iterator_init_range(record_iterator_t* iterator,
 
 // TODO: Do we guarantee that higher sequence numbers have at least our timestamp and lower sequence numbers up to our
 // timestamp?
-int ens_records_iterator_init_timerange(record_iterator_t* iterator, uint32_t* ts_start, uint32_t* ts_end);
+int ens_records_iterator_init_timerange(record_iterator_t* iterator, time_t* ts_start, time_t* ts_end);
 
 record_t* ens_records_iterator_next(record_iterator_t* iter);
 

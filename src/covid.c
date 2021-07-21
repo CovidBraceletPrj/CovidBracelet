@@ -12,6 +12,7 @@
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
+#include <kernel.h>
 
 #include "exposure-notification.h"
 #include "covid_types.h"
@@ -49,6 +50,8 @@ static struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_UUID16_ALL, 0x6f, 0xfd), //0xFD6F Exposure Notification Service
 	BT_DATA(BT_DATA_SVC_DATA16, &covid_adv_svd, sizeof(covid_adv_svd_t))};
 
+static struct k_mutex key_change_lock;
+
 static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, struct net_buf_simple *buf)
 {
 	if (adv_type == 3)
@@ -82,7 +85,7 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, str
                     memcpy(&contact.associated_encrypted_metadata, &rx_adv->associated_encrypted_metadata, sizeof(contact.associated_encrypted_metadata));
                     memcpy(&contact.rolling_proximity_identifier, &rx_adv->rolling_proximity_identifier, sizeof(contact.rolling_proximity_identifier));
                     memcpy(&contact.timestamp, &timestamp, sizeof(contact.timestamp));
-                    int rc = add_record(&contact);
+                    int rc = register_record(&contact);
                     printk("Contact stored (err %d)\n", rc);
 				}
 			}
@@ -317,11 +320,12 @@ static void check_keys(struct k_work *work)
 		printk("AEM: ");
 		print_aem(&encryptedMetadata);
 		printk("\n");
-
-		//TODO do we have to worry about race conditions here?
-		//worst case: we would be advertising a wrong key for a while
+		
+		// lock, so we can be sure to only advertise correct packages 
+		k_mutex_lock(&key_change_lock, K_FOREVER);
 		memcpy(&covid_adv_svd.rolling_proximity_identifier, &intervalIdentifier, sizeof(rolling_proximity_identifier_t));
 		memcpy(&covid_adv_svd.associated_encrypted_metadata, &encryptedMetadata, sizeof(associated_encrypted_metadata_t));
+		k_mutex_unlock(&key_change_lock);
 
 		init = 0;
 	}
@@ -371,6 +375,8 @@ int init_covid()
 		return err;
 	}
 
+	k_mutex_init(&key_change_lock);
+
 	k_timer_start(&my_timer, KEY_CHECK_INTERVAL, KEY_CHECK_INTERVAL);
 	return 0;
 }
@@ -381,6 +387,8 @@ int do_covid()
 
 	int err = 0;
 	#if CONFIG_BT
+	
+	k_mutex_lock(&key_change_lock, K_FOREVER);
 	err = bt_le_adv_start(BT_LE_ADV_NCONN, ad, ARRAY_SIZE(ad), NULL, 0);
 	#endif
 
@@ -395,6 +403,7 @@ int do_covid()
 	#if CONFIG_BT
 	err = bt_le_adv_stop();
 	#endif
+	k_mutex_unlock(&key_change_lock);
 
 	if (err)
 	{

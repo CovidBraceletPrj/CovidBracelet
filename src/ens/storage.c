@@ -61,7 +61,7 @@ int save_storage_information() {
     return rc;
 }
 
-int init_record_storage(void) {
+int init_record_storage(bool clean) {
     int rc = 0;
     struct flash_pages_info info;
     // define the nvs file system
@@ -86,10 +86,18 @@ int init_record_storage(void) {
     }
 
     // Load the current storage information
-    rc = load_storage_information();
-    if (rc) {
-        printk("Cannot load storage information (err %d)\n", rc);
-        return rc;
+    if (clean) {
+        rc = save_storage_information();
+        if (rc < 0) {
+            printk("Clean init of storage failed (err %d)\n", rc);
+            return rc;
+        }
+    } else {
+        rc = load_storage_information();
+        if (rc < 0) {
+            printk("Cannot load storage information (err %d)\n", rc);
+            return rc;
+        }
     }
 
     printk("Currently %d contacts stored!\n", record_information.count);
@@ -125,15 +133,16 @@ int add_record(record_t* src) {
      * state of our information about the stored contacts in combination with correct state of our flash.
      */
 
+    record_t rec;
+    memcpy(&rec, src, sizeof(rec));
     k_mutex_lock(&info_fs_lock, K_FOREVER);
 
     // Check, if next sn would be at start of page
-    record_sequence_number_t potential_next_sn =
+    rec.sn =
         get_latest_sequence_number() == get_oldest_sequence_number() ? 0 : sn_increment(get_latest_sequence_number());
-    storage_id_t potential_next_id = convert_sn_to_storage_id(potential_next_sn);
-
+    storage_id_t potential_next_id = convert_sn_to_storage_id(rec.sn);
     // write our entry to flash and check, if the current entry is already in use
-    int rc = ens_fs_write(&ens_fs, potential_next_id, src);
+    int rc = ens_fs_write(&ens_fs, potential_next_id, &rec);
     // if our error does NOT indicate, that this address is already in use, we just goto end and do nothing
     if (rc && rc != -ENS_ADDRINU) {
         // TODO: maybe also increment, if there is an internal error?
@@ -151,7 +160,7 @@ int add_record(record_t* src) {
             record_information.oldest_contact = sn_increment_by(record_information.oldest_contact, deletedRecordsCount);
         }
         // after creating some space, try to write again
-        rc = ens_fs_write(&ens_fs, potential_next_id, src);
+        rc = ens_fs_write(&ens_fs, potential_next_id, &rec);
         if (rc) {
             goto inc;
         }
