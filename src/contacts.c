@@ -54,77 +54,23 @@ int register_record(record_t* record) {
     return rc;
 }
 
-int get_number_of_infected_for_period(ENPeriodKey* key, time_t timestamp) {
-    ENPeriodIdentifierKey periodIdentifier;
-    en_derive_period_identifier_key(&periodIdentifier, key);
-
-    ENIntervalNumber intervalStart = en_get_interval_number_at_period_start(timestamp);
-
-    // derive all interval identifiers
-    ENIntervalIdentifier intervals[EN_TEK_ROLLING_PERIOD];
-    for (int i = 0; i < EN_TEK_ROLLING_PERIOD; i++) {
-        en_derive_interval_identifier(&intervals[i], &periodIdentifier, intervalStart + i);
-    }
-
-    time_t end_ts = timestamp + 3600 * 24;
+int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t* ctx, int count) {
     record_iterator_t iterator;
-    int rc = ens_records_iterator_init_timerange(&iterator, &timestamp, &end_ts);
-    if (rc) {
-        return rc;
-    }
-    printk("init iterator between %d and %d\n", iterator.current.sn, iterator.sn_end);
-
-    uint64_t infected = 0;
-    while (!iterator.finished) {
-        // printk("new contact\n");
-        for (int i = 0; i < EN_TEK_ROLLING_PERIOD; i++) {
-            // printk("new period");
-            if (memcmp(&iterator.current.rolling_proximity_identifier, &intervals[i],
+    for (int i = 0; i < count; i++) {
+        int rc = ens_records_iterator_init_timerange(&iterator, &ctx[i].search_start, &ctx[i].search_end);
+        if (rc) {
+            return rc;
+        }
+        while (!iterator.finished) {
+            if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[i].interval_identifier,
                        sizeof(iterator.current.rolling_proximity_identifier)) == 0) {
-                // we found a match
-                infected++;
+                ctx[i].infected++;
                 break;
             }
-        }
-        ens_records_iterator_next(&iterator);
-    }
-    return infected;
-}
-
-void get_number_of_infected_for_multiple_periods(infected_for_period_key_ctx_t* ctx, time_t timestamp, int count) {
-    // for (int i = 0; i < count; i++) {
-    //     ctx[i].infected = get_contacts_for_period_key(ctx[i].key, timestamp);
-    // }
-
-    ENIntervalIdentifier intervals[count][EN_TEK_ROLLING_PERIOD];
-    for (int i = 0; i < count; i++) {
-        ENIntervalNumber intervalStart = en_get_interval_number_at_period_start(timestamp);
-        for (int j = 0; j < EN_TEK_ROLLING_PERIOD; j++) {
-            en_derive_interval_identifier(&intervals[i][j], &ctx[i].key, intervalStart + j);
+            ens_records_iterator_next(&iterator);
         }
     }
-
-    // init iterator
-    time_t end_ts = timestamp + 3600 * 24;
-    record_iterator_t iterator;
-    int rc = ens_records_iterator_init_timerange(&iterator, &timestamp, &end_ts);
-    if (rc) {
-        return rc;
-    }
-    printk("init iterator between %d and %d\n", iterator.current.sn, iterator.sn_end);
-
-    while (!iterator.finished) {
-        for (int i = 0; i < count; i++) {
-            for (int j = 0; j < EN_TEK_ROLLING_PERIOD; j++) {
-                if (memcmp(&iterator.current.rolling_proximity_identifier, &intervals[i][j],
-                           sizeof(iterator.current.rolling_proximity_identifier)) == 0) {
-                    ctx[i].infected++;
-                    break;
-                }
-            }
-        }
-        ens_records_iterator_next(&iterator);
-    }
+    return 0;
 }
 
 void setup_test_data() {
@@ -142,12 +88,13 @@ void setup_test_data() {
         // create infected record which
         record_t infectedRecord;
         infectedRecord.timestamp = i * EN_INTERVAL_LENGTH;
-        en_derive_interval_identifier(&infectedRecord.rolling_proximity_identifier, &infectedPik, i);
+        en_derive_interval_identifier((ENIntervalIdentifier*)&infectedRecord.rolling_proximity_identifier, &infectedPik,
+                                      i);
         record_t dummyRecord;
-        en_derive_interval_identifier(&dummyRecord.rolling_proximity_identifier, &dummyPik, i);
+        en_derive_interval_identifier((ENIntervalIdentifier*)&dummyRecord.rolling_proximity_identifier, &dummyPik, i);
         int rc;
         if (i % 3 == 0) {
-            if (rc = add_record(&infectedRecord)) {
+            if ((rc = add_record(&infectedRecord))) {
                 printk("err %d\n", rc);
             }
         }
@@ -156,7 +103,7 @@ void setup_test_data() {
 
         for (int j = 0; j < EN_INTERVAL_LENGTH / spread; j++) {
             dummyRecord.timestamp = i * EN_INTERVAL_LENGTH + j * spread + 1;
-            if (rc = add_record(&dummyRecord)) {
+            if ((rc = add_record(&dummyRecord))) {
                 printk("err %d\n", rc);
             }
         }
@@ -173,7 +120,7 @@ void setup_test_data() {
     timing_start();
     start_time = timing_counter_get();
 
-    printk("found %d infected\n", get_number_of_infected_for_period(&infectedPeriodKey, 200));
+    // printk("found %d infected\n", get_number_of_infected_for_period(&infectedPeriodKey, 200));
 
     end_time = timing_counter_get();
 

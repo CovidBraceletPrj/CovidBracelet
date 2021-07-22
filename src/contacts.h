@@ -16,8 +16,10 @@
 #include "exposure-notification.h"
 
 typedef struct infected_for_period_key_ctx {
-    ENPeriodKey* key;
+    ENIntervalIdentifier* interval_identifier;
     int infected;
+    time_t search_start;
+    time_t search_end;
 } infected_for_period_key_ctx_t;
 
 void print_key(_ENBaseKey* key);
@@ -43,13 +45,15 @@ int register_record(record_t* record);
 int get_number_of_infected_for_period(ENPeriodKey* key, time_t timestamp);
 
 /**
- * Get the number of infected records for multiple PeriodKeys.
+ * Get the number of infected records for multiple IntervalIdentifier.
  *
  * @param ctx array of period keys and timestamps with field "infected" for the number of infected records
  * @param timestamp the timestamp of the period
  * @param count the number of periods in the array
+ *
+ * @returns 0 in case of success, -ERRNO in case of an error
  */
-void get_number_of_infected_for_multiple_periods(infected_for_period_key_ctx_t* ctx, time_t timestamp, int count);
+int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t* ctx, int count);
 
 /**
  * Setup fixed test data for storage.
