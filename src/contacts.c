@@ -59,7 +59,7 @@ int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t*
     for (int i = 0; i < count; i++) {
         int rc = ens_records_iterator_init_timerange(&iterator, &ctx[i].search_start, &ctx[i].search_end);
         if (rc) {
-            return rc;
+            continue;
         }
         while (!iterator.finished) {
             if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[i].interval_identifier,
@@ -85,7 +85,7 @@ void setup_test_data() {
     en_derive_period_identifier_key(&dummyPik, &dummyPeriodKey);
 
     for (int i = 0; i < EN_TEK_ROLLING_PERIOD; i++) {
-        // create infected record which
+        // create infected record
         record_t infectedRecord;
         infectedRecord.timestamp = i * EN_INTERVAL_LENGTH;
         en_derive_interval_identifier((ENIntervalIdentifier*)&infectedRecord.rolling_proximity_identifier, &infectedPik,
@@ -93,10 +93,8 @@ void setup_test_data() {
         record_t dummyRecord;
         en_derive_interval_identifier((ENIntervalIdentifier*)&dummyRecord.rolling_proximity_identifier, &dummyPik, i);
         int rc;
-        if (i % 3 == 0) {
-            if ((rc = add_record(&infectedRecord))) {
-                printk("err %d\n", rc);
-            }
+        if ((rc = add_record(&infectedRecord))) {
+            printk("err %d\n", rc);
         }
 
         int spread = 4;
@@ -110,6 +108,20 @@ void setup_test_data() {
         printk("period %d\n", i);
     }
 
+    // setup our ordered array with infected RPIs
+    infected_for_period_key_ctx_t infectedIntervals[10];
+    for (int i = 0; i < 10; i++) {
+        int intervalNumber = (i + 2) * 2;
+        float offset = 1.5;
+        infectedIntervals[i].infected = 0;
+        infectedIntervals[i].search_start =
+            (intervalNumber - offset) * EN_INTERVAL_LENGTH;  // start one and a half interval before
+        infectedIntervals[i].search_end =
+            (intervalNumber + offset) * EN_INTERVAL_LENGTH;  // end one and a half interval after
+        en_derive_interval_identifier((ENIntervalIdentifier*)&infectedIntervals[i].interval_identifier, &infectedPik,
+                                      intervalNumber);
+    }
+
     printk("starting measurement\n");
 
     timing_t start_time, end_time;
@@ -120,9 +132,13 @@ void setup_test_data() {
     timing_start();
     start_time = timing_counter_get();
 
-    // printk("found %d infected\n", get_number_of_infected_for_period(&infectedPeriodKey, 200));
+    get_number_of_infected_for_multiple_intervals(infectedIntervals, 10);
 
     end_time = timing_counter_get();
+
+    for (int i = 0; i < 10; i++) {
+        printk("ctx: %d infected: %d\n", i, infectedIntervals[i].infected);
+    }
 
     total_cycles = timing_cycles_get(&start_time, &end_time);
     total_ns = timing_cycles_to_ns(total_cycles);

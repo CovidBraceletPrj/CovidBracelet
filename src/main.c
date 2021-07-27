@@ -47,7 +47,7 @@ void main(void) {
         printk("init storage failed (err %d)\n", err);
         return;
     }
-    // setup_test_data();
+    setup_test_data();
 #endif
 
     err = bloom_init();
