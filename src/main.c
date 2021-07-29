@@ -50,7 +50,7 @@ void main(void) {
     setup_test_data();
 #endif
 
-    err = bloom_init();
+    err = bloom_init(1);
     if (err) {
         printk("init bloom failed (err %d)\n", err);
         return;
