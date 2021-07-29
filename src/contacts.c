@@ -50,7 +50,7 @@ int register_record(record_t* record) {
     if (rc) {
         return rc;
     }
-    rc = bloom_add_record(record);
+    // rc = bloom_add_record(record);
     return rc;
 }
 
