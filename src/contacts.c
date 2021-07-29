@@ -56,19 +56,30 @@ int register_record(record_t* record) {
 
 int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t* ctx, int count) {
     record_iterator_t iterator;
-    for (int i = 0; i < count; i++) {
-        int rc = ens_records_iterator_init_timerange(&iterator, &ctx[i].search_start, &ctx[i].search_end);
+    int i = 0;
+    while (i < count) {
+        // determine start and end of iterator
+        int start = i;
+        int end = i;
+        while (end + 1 < count && ctx[end + 1].search_start <= ctx[end].search_end) {
+            end++;
+        }
+        // init iterator with start and end
+        int rc = ens_records_iterator_init_timerange(&iterator, &ctx[start].search_start, &ctx[end].search_end);
         if (rc) {
-            continue;
+            goto end;
         }
         while (!iterator.finished) {
-            if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[i].interval_identifier,
-                       sizeof(iterator.current.rolling_proximity_identifier)) == 0) {
-                ctx[i].infected++;
-                break;
+            for (int j = start; j <= end; j++) {
+                if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[j].interval_identifier,
+                           sizeof(iterator.current.rolling_proximity_identifier)) == 0) {
+                    ctx[j].infected++;
+                }
             }
             ens_records_iterator_next(&iterator);
         }
+    end:
+        i = end + 1;
     }
     return 0;
 }
