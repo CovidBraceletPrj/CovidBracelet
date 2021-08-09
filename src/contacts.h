@@ -20,7 +20,9 @@ typedef struct infected_for_period_key_ctx {
     int infected;
     time_t search_start;
     time_t search_end;
-} infected_for_period_key_ctx_t;
+} __packed infected_for_period_key_ctx_t;
+
+typedef int (*test_func_t)(infected_for_period_key_ctx_t* infectedIntervals, int count);
 
 void print_key(_ENBaseKey* key);
 void print_rpi(rolling_proximity_identifier_t* rpi);
@@ -52,7 +54,7 @@ int get_number_of_infected_for_period(ENPeriodKey* key, time_t timestamp);
  *
  * @returns 0 in case of success, -ERRNO in case of an error
  */
-int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t* ctx, int count);
+// int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t* ctx, int count);
 
 /**
  * Setup fixed test data for storage.

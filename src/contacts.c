@@ -54,7 +54,47 @@ int register_record(record_t* record) {
     return rc;
 }
 
-int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t* ctx, int count) {
+int get_number_of_infected_for_multiple_intervals_dumb(infected_for_period_key_ctx_t* ctx, int count) {
+    record_iterator_t iterator;
+    int rc = ens_records_iterator_init_timerange(&iterator, NULL, NULL);
+    if (rc) {
+        // there was a general error, so just do nothing
+        return rc;
+    }
+    while (!iterator.finished) {
+        for (int i = 0; i < count; i++) {
+            if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[i].interval_identifier,
+                       sizeof(rolling_proximity_identifier_t)) == 0) {
+                ctx[i].infected++;
+            }
+        }
+        ens_records_iterator_next(&iterator);
+    }
+    return 0;
+}
+
+int get_number_of_infected_for_multiple_intervals_simple(infected_for_period_key_ctx_t* ctx, int count) {
+    printk("start of simple\n");
+    record_iterator_t iterator;
+    for (int i = 0; i < count; i++) {
+        int rc = ens_records_iterator_init_timerange(&iterator, &ctx[i].search_start, &ctx[i].search_end);
+        if (rc) {
+            // on error, skip this rpi
+            continue;
+        }
+        while (!iterator.finished) {
+            if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[i].interval_identifier,
+                       sizeof(rolling_proximity_identifier_t)) == 0) {
+                ctx[i].infected++;
+            }
+            ens_records_iterator_next(&iterator);
+        }
+    }
+    return 0;
+}
+
+int get_number_of_infected_for_multiple_intervals_optimized(infected_for_period_key_ctx_t* ctx, int count) {
+    printk("start of opt\n");
     record_iterator_t iterator;
     int i = 0;
     while (i < count) {
@@ -82,6 +122,29 @@ int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t*
         i = end + 1;
     }
     return 0;
+}
+
+void measure_perf(test_func_t func, const char* label, infected_for_period_key_ctx_t* infectedIntervals, int count) {
+    printk("---------------------------\n'%s': starting measurement\n", label);
+
+    timing_t start_time, end_time;
+    uint64_t total_cycles;
+    uint64_t total_ns;
+
+    timing_init();
+    timing_start();
+    start_time = timing_counter_get();
+
+    func(infectedIntervals, count);
+
+    end_time = timing_counter_get();
+
+    total_cycles = timing_cycles_get(&start_time, &end_time);
+    total_ns = timing_cycles_to_ns(total_cycles);
+
+    timing_stop();
+
+    printk("\n'%s' took %lld ns\n---------------------------\n", label, total_ns);
 }
 
 void setup_test_data() {
@@ -119,42 +182,29 @@ void setup_test_data() {
         printk("period %d\n", i);
     }
 
+    int infectedCount = 36;
+    int spread = 2;
+
     // setup our ordered array with infected RPIs
-    infected_for_period_key_ctx_t infectedIntervals[10];
-    for (int i = 0; i < 10; i++) {
+    infected_for_period_key_ctx_t infectedIntervals[infectedCount * spread];
+    for (int i = 0; i < infectedCount; i++) {
         int intervalNumber = (i + 2) * 2;
-        float offset = 1.5;
-        infectedIntervals[i].infected = 0;
-        infectedIntervals[i].search_start =
-            (intervalNumber - offset) * EN_INTERVAL_LENGTH;  // start one and a half interval before
-        infectedIntervals[i].search_end =
-            (intervalNumber + offset) * EN_INTERVAL_LENGTH;  // end one and a half interval after
-        en_derive_interval_identifier((ENIntervalIdentifier*)&infectedIntervals[i].interval_identifier, &infectedPik,
-                                      intervalNumber);
+        float range = 1.5;
+        for (int j = 0; j < spread; j++) {
+            int offset = (EN_INTERVAL_LENGTH / spread) * j;
+            infectedIntervals[i * spread + j].infected = 0;
+            infectedIntervals[i * spread + j].search_start =
+                (intervalNumber - range) * EN_INTERVAL_LENGTH + offset;  // start one and a half interval before
+            infectedIntervals[i * spread + j].search_end =
+                (intervalNumber + range) * EN_INTERVAL_LENGTH + offset;  // end one and a half interval after
+            en_derive_interval_identifier(&infectedIntervals[i * spread + j].interval_identifier, &infectedPik,
+                                          intervalNumber);
+        }
     }
 
-    printk("starting measurement\n");
-
-    timing_t start_time, end_time;
-    uint64_t total_cycles;
-    uint64_t total_ns;
-
-    timing_init();
-    timing_start();
-    start_time = timing_counter_get();
-
-    get_number_of_infected_for_multiple_intervals(infectedIntervals, 10);
-
-    end_time = timing_counter_get();
-
-    for (int i = 0; i < 10; i++) {
-        printk("ctx: %d infected: %d\n", i, infectedIntervals[i].infected);
-    }
-
-    total_cycles = timing_cycles_get(&start_time, &end_time);
-    total_ns = timing_cycles_to_ns(total_cycles);
-
-    timing_stop();
-
-    printk("timing took %lld ns\n", total_ns);
+    measure_perf(get_number_of_infected_for_multiple_intervals_dumb, "dumb", infectedIntervals, infectedCount * spread);
+    measure_perf(get_number_of_infected_for_multiple_intervals_simple, "simple", infectedIntervals,
+                 infectedCount * spread);
+    measure_perf(get_number_of_infected_for_multiple_intervals_optimized, "optimized", infectedIntervals,
+                 infectedCount * spread);
 }
