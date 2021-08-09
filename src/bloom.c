@@ -1,7 +1,7 @@
 #include "bloom.h"
 #include "ens/storage.h"
 
-bloom_filter_t* bloom_init(size_t size) {
+bloom_filter_t* bloom_create(size_t size) {
     bloom_filter_t* bloom = k_calloc(1, sizeof(bloom_filter_t));
     bloom->size = size;
     bloom->data = k_malloc(size * sizeof(uint8_t));

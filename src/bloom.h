@@ -19,7 +19,7 @@ typedef struct bloom_filter {
 /**
  * Initialize the bloom filter on basis of the already registerred records.
  */
-bloom_filter_t* bloom_init(size_t size);
+bloom_filter_t* bloom_create(size_t size);
 
 // TODO lome: maybe only use RPI (should be sufficient)
 void bloom_add_record(bloom_filter_t* bloom, record_t* record);
