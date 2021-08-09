@@ -50,11 +50,11 @@ void main(void) {
     setup_test_data();
 #endif
 
-    err = bloom_init(1);
-    if (err) {
-        printk("init bloom failed (err %d)\n", err);
-        return;
-    }
+    // err = bloom_create(1);
+    // if (err) {
+    //     printk("init bloom failed (err %d)\n", err);
+    //     return;
+    // }
 
     err = init_io();
     if (err) {
