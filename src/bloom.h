@@ -2,16 +2,9 @@
 #define BLOOM_H
 
 #include "ens/storage.h"
-
-typedef uint32_t (*hash_function)(const void* data);
-
-typedef struct bloom_hash {
-    hash_function func;
-    struct bloom_hash* next;
-} bloom_hash_t;
+#include "exposure-notification.h"
 
 typedef struct bloom_filter {
-    bloom_hash_t* func;
     uint8_t* data;
     size_t size;
 } bloom_filter_t;
@@ -19,12 +12,14 @@ typedef struct bloom_filter {
 /**
  * Initialize the bloom filter on basis of the already registerred records.
  */
-bloom_filter_t* bloom_create(size_t size);
+bloom_filter_t* bloom_init(size_t size);
+
+void bloom_destroy(bloom_filter_t* bloom);
 
 // TODO lome: maybe only use RPI (should be sufficient)
-void bloom_add_record(bloom_filter_t* bloom, record_t* record);
+void bloom_add_record(bloom_filter_t* bloom, ENIntervalIdentifier* rpi);
 
 // TODO lome: maybe only use RPI (should be sufficient)
-bool bloom_probably_has_record(bloom_filter_t* bloom, record_t* record);
+bool bloom_probably_has_record(bloom_filter_t* bloom, ENIntervalIdentifier* rpi);
 
 #endif
