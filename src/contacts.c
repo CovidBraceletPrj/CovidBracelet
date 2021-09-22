@@ -145,7 +145,7 @@ void fill_bloom_with_stored_records(bloom_filter_t* bloom) {
 
     // fill bloom filter with records
     while (!iterator.finished) {
-        bloom_add_record(bloom, &iterator.current);
+        bloom_add_record(bloom, &iterator.current.rolling_proximity_identifier);
         ens_records_iterator_next(&iterator);
     }
 }
@@ -180,15 +180,21 @@ int64_t test_bloom_performance(infected_for_period_key_ctx_t* ctx, int count) {
         }
     }
 
+    // Copy infected records to start of array
     int amount = 0;
     for (int i = 0; i < count; i++) {
-        amount += ctx[i].infected;
+        if (ctx[i].infected) {
+            memcpy(&ctx[amount], &ctx[i], sizeof(ctx[i]));
+            amount++;
+        }
     }
     printk("amount of infected records: %d\n", amount);
 
-    int ret = get_number_of_infected_for_multiple_intervals_optimized(ctx, count);
-cleanup:
-    k_free(bloom);
+    int ret = get_number_of_infected_for_multiple_intervals_dumb(ctx, amount);
+    // int ret = get_number_of_infected_for_multiple_intervals_simple(ctx, amount);
+    // int ret = get_number_of_infected_for_multiple_intervals_optimized(ctx, amount);
+
+    bloom_destroy(bloom);
     return ret;
 }
 
@@ -202,19 +208,17 @@ int64_t test_bloom_reverse_performance(infected_for_period_key_ctx_t* ctx, int c
         return -1;
     }
 
+    // Measure bloom creation time
     timing_t start_time, end_time;
     uint64_t total_cycles;
     uint64_t total_ns;
-
     start_time = timing_counter_get();
     for (int i = 0; i < count; i++) {
         bloom_add_record(bloom, &ctx[i].interval_identifier);
     }
     end_time = timing_counter_get();
-
     total_cycles = timing_cycles_get(&start_time, &end_time);
     total_ns = timing_cycles_to_ns(total_cycles);
-
     printk("\nbloom init took %lld ms\n\n", total_ns / 1000000);
 
     int64_t amount = 0;
@@ -244,7 +248,7 @@ int64_t test_bloom_reverse_performance(infected_for_period_key_ctx_t* ctx, int c
     }
 
 cleanup:
-    k_free(bloom);
+    bloom_destroy(bloom);
     return amount;
 }
 
@@ -261,21 +265,14 @@ static ENPeriodIdentifierKey infectedPik;
 static ENPeriodIdentifierKey dummyPik;
 
 void fill_test_rki_data(infected_for_period_key_ctx_t* infectedIntervals, int count) {
-    int infectedCount = 50;
-    int spread = count / infectedCount;
-    for (int i = 0; i < infectedCount; i++) {
-        int intervalNumber = (i + 2) * 2;
-        float range = 1.5;
-        for (int j = 0; j < spread; j++) {
-            int offset = (EN_INTERVAL_LENGTH / spread) * j;
-            infectedIntervals[i * spread + j].infected = 0;
-            infectedIntervals[i * spread + j].search_start =
-                (intervalNumber - range) * EN_INTERVAL_LENGTH + offset;  // start one and a half intervals before
-            infectedIntervals[i * spread + j].search_end =
-                (intervalNumber + range) * EN_INTERVAL_LENGTH + offset;  // end one and a half intervals after
-            en_derive_interval_identifier(&infectedIntervals[i * spread + j].interval_identifier, &infectedPik,
-                                          intervalNumber);
-        }
+    int totalTime = EN_TEK_ROLLING_PERIOD * EN_INTERVAL_LENGTH;
+    int stepSize = totalTime / count;
+    for (int i = 0; i < count; i++) {
+        int intervalNumber = (i * stepSize) / EN_INTERVAL_LENGTH;
+        en_derive_interval_identifier(&infectedIntervals[i].interval_identifier, &infectedPik, intervalNumber);
+        infectedIntervals[i].infected = 0;
+        infectedIntervals[i].search_start = i < 3 ? 0 : (i - 2) * stepSize;
+        infectedIntervals[i].search_end = (i + 2) * stepSize;
     }
 }
 
@@ -308,12 +305,15 @@ void measure_perf(test_func_t func, const char* label, infected_for_period_key_c
     printk("\n'%s' took %lld ms\n---------------------------\n", label, total_ns / 1000000);
 }
 
+////////////////////
+// SETUP DATA     //
+////////////////////
+
 void setup_test_data() {
     en_derive_period_identifier_key(&infectedPik, &infectedPeriodKey);
     en_derive_period_identifier_key(&dummyPik, &dummyPeriodKey);
 
-// every 100th interval has an infected record
-#define INTERVAL_SPREAD 100
+#define INTERVAL_SPREAD 10
 
     for (int i = 0; i < EN_TEK_ROLLING_PERIOD; i++) {
         // create infected record
@@ -339,9 +339,12 @@ void setup_test_data() {
         printk("period %d\n", i);
     }
 
-#define INFECTED_INTERVALS_COUNT 500
+#define INFECTED_INTERVALS_COUNT 100
     // setup our ordered array with infected RPIs
     static infected_for_period_key_ctx_t infectedIntervals[INFECTED_INTERVALS_COUNT];
+
+    printk("Starting measurements with %d RPIs to seach and an infection rate of every %d. interval\n",
+           INFECTED_INTERVALS_COUNT, INTERVAL_SPREAD);
 
     // measure_perf(get_number_of_infected_for_multiple_intervals_dumb, "dumb", infectedIntervals,
     //              INFECTED_INTERVALS_COUNT);
