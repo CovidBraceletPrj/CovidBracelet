@@ -15,14 +15,14 @@
 #include "ens/storage.h"
 #include "exposure-notification.h"
 
-typedef struct infected_for_period_key_ctx {
+typedef struct {
     ENIntervalIdentifier interval_identifier;
     int infected;
     time_t search_start;
     time_t search_end;
-} __packed infected_for_period_key_ctx_t;
+} __packed infected_for_interval_ident_ctx_t;
 
-typedef int (*test_func_t)(infected_for_period_key_ctx_t* infectedIntervals, int count);
+typedef int (*test_func_t)(infected_for_interval_ident_ctx_t* infectedIntervals, int count);
 
 void print_key(_ENBaseKey* key);
 void print_rpi(rolling_proximity_identifier_t* rpi);

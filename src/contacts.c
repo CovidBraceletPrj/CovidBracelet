@@ -54,10 +54,13 @@ int register_record(record_t* record) {
     return rc;
 }
 
+// set size to test
+#define TEST_DATA_SIZE 100000
+
 /**
  * Dumb implementation, where a single iterator is created for iterating over the entire flash.
  */
-int get_number_of_infected_for_multiple_intervals_dumb(infected_for_period_key_ctx_t* ctx, int count) {
+int get_number_of_infected_for_multiple_intervals_dumb(infected_for_interval_ident_ctx_t* ctx, int count) {
     record_iterator_t iterator;
     int rc = ens_records_iterator_init_timerange(&iterator, NULL, NULL);
     if (rc) {
@@ -79,7 +82,7 @@ int get_number_of_infected_for_multiple_intervals_dumb(infected_for_period_key_c
 /**
  * Simple implementation, where an iterator is created for every element in the passed arrray.
  */
-int get_number_of_infected_for_multiple_intervals_simple(infected_for_period_key_ctx_t* ctx, int count) {
+int get_number_of_infected_for_multiple_intervals_simple(infected_for_interval_ident_ctx_t* ctx, int count) {
     record_iterator_t iterator;
     for (int i = 0; i < count; i++) {
         int rc = ens_records_iterator_init_timerange(&iterator, &ctx[i].search_start, &ctx[i].search_end);
@@ -101,7 +104,7 @@ int get_number_of_infected_for_multiple_intervals_simple(infected_for_period_key
 /**
  * Optimized implementation, where overlapping search intervals for consecutive RPI are merged.
  */
-int get_number_of_infected_for_multiple_intervals_optimized(infected_for_period_key_ctx_t* ctx, int count) {
+int get_number_of_infected_for_multiple_intervals_optimized(infected_for_interval_ident_ctx_t* ctx, int count) {
     record_iterator_t iterator;
     int i = 0;
     while (i < count) {
@@ -153,7 +156,7 @@ void fill_bloom_with_stored_records(bloom_filter_t* bloom) {
 /**
  * Fill the bloom filter with flash records and test passed RPIs against it.
  */
-int64_t test_bloom_performance(infected_for_period_key_ctx_t* ctx, int count) {
+int64_t test_bloom_performance(infected_for_interval_ident_ctx_t* ctx, int count) {
     bloom_filter_t* bloom = bloom_init(get_num_records() * 2);
     if (!bloom) {
         printk("bloom init failed\n");
@@ -190,8 +193,8 @@ int64_t test_bloom_performance(infected_for_period_key_ctx_t* ctx, int count) {
     }
     printk("amount of infected records: %d\n", amount);
 
-    int ret = get_number_of_infected_for_multiple_intervals_dumb(ctx, amount);
-    // int ret = get_number_of_infected_for_multiple_intervals_simple(ctx, amount);
+    // int ret = get_number_of_infected_for_multiple_intervals_dumb(ctx, amount);
+    int ret = get_number_of_infected_for_multiple_intervals_simple(ctx, amount);
     // int ret = get_number_of_infected_for_multiple_intervals_optimized(ctx, amount);
 
     bloom_destroy(bloom);
@@ -201,7 +204,7 @@ int64_t test_bloom_performance(infected_for_period_key_ctx_t* ctx, int count) {
 /**
  * Fill bloom with passed RPIs and test flash records against it.
  */
-int64_t test_bloom_reverse_performance(infected_for_period_key_ctx_t* ctx, int count) {
+int64_t test_bloom_reverse_performance(infected_for_interval_ident_ctx_t* ctx, int count) {
     bloom_filter_t* bloom = bloom_init(count * 2);
     if (!bloom) {
         printk("bloom init failed\n");
@@ -222,29 +225,31 @@ int64_t test_bloom_reverse_performance(infected_for_period_key_ctx_t* ctx, int c
     printk("\nbloom init took %lld ms\n\n", total_ns / 1000000);
 
     int64_t amount = 0;
+    for (int round = 0; round < TEST_DATA_SIZE / count; round++) {
+        record_iterator_t iterator;
+        int rc = ens_records_iterator_init_timerange(&iterator, NULL, NULL);
+        if (rc) {
+            printk("init iterator failed (err %d)\n", rc);
+            amount = rc;
+            goto cleanup;
+        }
 
-    record_iterator_t iterator;
-    int rc = ens_records_iterator_init_timerange(&iterator, NULL, NULL);
-    if (rc) {
-        printk("init iterator failed (err %d)\n", rc);
-        amount = rc;
-        goto cleanup;
-    }
-
-    while (!iterator.finished) {
-        if (bloom_probably_has_record(bloom, &iterator.current.rolling_proximity_identifier)) {
-            for (int i = 0; i < count; i++) {
-                if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[i].interval_identifier,
-                           sizeof(iterator.current.rolling_proximity_identifier)) == 0) {
-                    amount++;
-                    break;
-                }
-                if (iterator.current.timestamp > ctx[i].search_end) {
-                    break;
+        while (!iterator.finished) {
+            if (bloom_probably_has_record(bloom, &iterator.current.rolling_proximity_identifier)) {
+                for (int i = 0; i < count; i++) {
+                    if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[i].interval_identifier,
+                               sizeof(iterator.current.rolling_proximity_identifier)) == 0) {
+                        amount++;
+                        break;
+                    }
+                    if (iterator.current.timestamp > ctx[i].search_end) {
+                        break;
+                    }
                 }
             }
+            ens_records_iterator_next(&iterator);
         }
-        ens_records_iterator_next(&iterator);
+        printk("round %d\n", round);
     }
 
 cleanup:
@@ -264,7 +269,7 @@ static ENPeriodKey dummyPeriodKey = {
 static ENPeriodIdentifierKey infectedPik;
 static ENPeriodIdentifierKey dummyPik;
 
-void fill_test_rki_data(infected_for_period_key_ctx_t* infectedIntervals, int count) {
+void fill_test_rki_data(infected_for_interval_ident_ctx_t* infectedIntervals, int count) {
     int totalTime = EN_TEK_ROLLING_PERIOD * EN_INTERVAL_LENGTH;
     int stepSize = totalTime / count;
     for (int i = 0; i < count; i++) {
@@ -280,7 +285,10 @@ void fill_test_rki_data(infected_for_period_key_ctx_t* infectedIntervals, int co
 // MEASURING FUNC //
 ////////////////////
 
-void measure_perf(test_func_t func, const char* label, infected_for_period_key_ctx_t* infectedIntervals, int count) {
+void measure_perf(test_func_t func,
+                  const char* label,
+                  infected_for_interval_ident_ctx_t* infectedIntervals,
+                  int count) {
     printk("---------------------------\n'%s': starting measurement\n", label);
 
     fill_test_rki_data(infectedIntervals, count);
@@ -313,7 +321,8 @@ void setup_test_data() {
     en_derive_period_identifier_key(&infectedPik, &infectedPeriodKey);
     en_derive_period_identifier_key(&dummyPik, &dummyPeriodKey);
 
-#define INTERVAL_SPREAD 10
+// every 100th record is infected
+#define INTERVAL_SPREAD 100
 
     for (int i = 0; i < EN_TEK_ROLLING_PERIOD; i++) {
         // create infected record
@@ -339,9 +348,9 @@ void setup_test_data() {
         printk("period %d\n", i);
     }
 
-#define INFECTED_INTERVALS_COUNT 100
+#define INFECTED_INTERVALS_COUNT 2000
     // setup our ordered array with infected RPIs
-    static infected_for_period_key_ctx_t infectedIntervals[INFECTED_INTERVALS_COUNT];
+    static infected_for_interval_ident_ctx_t infectedIntervals[INFECTED_INTERVALS_COUNT];
 
     printk("Starting measurements with %d RPIs to seach and an infection rate of every %d. interval\n",
            INFECTED_INTERVALS_COUNT, INTERVAL_SPREAD);
@@ -353,7 +362,82 @@ void setup_test_data() {
     // measure_perf(get_number_of_infected_for_multiple_intervals_optimized, "optimized", infectedIntervals,
     //              INFECTED_INTERVALS_COUNT);
 
-    measure_perf(test_bloom_performance, "bloom", infectedIntervals, INFECTED_INTERVALS_COUNT);
+    // TODO lome: prepare massive tests for bloom simple & reverse
+    // TODO lome: document everything
+
+    // measure_perf(test_bloom_performance, "bloom", infectedIntervals, INFECTED_INTERVALS_COUNT);
 
     measure_perf(test_bloom_reverse_performance, "bloom reverse", infectedIntervals, INFECTED_INTERVALS_COUNT);
+}
+
+int reverse_bloom_filter(infected_for_interval_ident_ctx_t* ctx, int count) {
+    bloom_filter_t* bloom = bloom_init(count * 2);
+    if (!bloom) {
+        printk("bloom init failed\n");
+        return -1;
+    }
+
+    // init bloom filter with passed records
+    for (int i = 0; i < count; i++) {
+        bloom_add_record(bloom, &ctx[i].interval_identifier);
+    }
+
+    int64_t amount = 0;
+
+    // init iterator over the entire storage
+    record_iterator_t iterator;
+    int rc = ens_records_iterator_init_timerange(&iterator, NULL, NULL);
+    if (rc) {
+        printk("init iterator failed (err %d)\n", rc);
+        amount = rc;
+        goto cleanup;
+    }
+
+    while (!iterator.finished) {
+        if (bloom_probably_has_record(bloom, &iterator.current.rolling_proximity_identifier)) {
+            for (int i = 0; i < count; i++) {
+                if (memcmp(&iterator.current.rolling_proximity_identifier, &ctx[i].interval_identifier,
+                           sizeof(iterator.current.rolling_proximity_identifier)) == 0) {
+                    ctx[i].infected = 1;
+                    amount++;
+                    break;
+                }
+                if (iterator.current.timestamp > ctx[i].search_end) {
+                    break;
+                }
+            }
+        }
+        ens_records_iterator_next(&iterator);
+    }
+
+cleanup:
+    // destroy bloom filter after things are finished
+    bloom_destroy(bloom);
+    return amount;
+}
+
+// risc_assessment
+// TODo lome: liste von Tagesschlüsseln rein und liste von tagesschlüsseln raus
+
+/**
+ * Check for a list of specified interval identifiers, whether they were probably met or not.
+ * @param ctx list of interval identifiers to check
+ * @param count amount of identifiers to check
+ * @return the amount of met intervals, -ERRNO on error
+ */
+int check_possible_contacts_for_intervals(infected_for_interval_ident_ctx_t* ctx, int count) {
+    return reverse_bloom_filter(ctx, count);
+}
+
+typedef struct {
+    ENPeriodKey periodKey;
+    time_t start;
+    time_t end;
+    int met;
+} period_key_information_t;
+
+// TODO lome: needed?
+int check_possible_contacts_for_periods(period_key_information_t* periodKey, int count) {
+    infected_for_interval_ident_ctx_t intervalIdents[count * 144];
+    return check_possible_contacts_for_intervals(intervalIdents, 0);
 }

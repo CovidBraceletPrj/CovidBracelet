@@ -42,12 +42,12 @@ void main(void) {
 #endif
 
 #if CONFIG_FLASH
-    err = init_record_storage(true);
+    err = init_record_storage(false);
     if (err) {
         printk("init storage failed (err %d)\n", err);
         return;
     }
-    setup_test_data();
+    // setup_test_data();
 #endif
 
     err = init_io();
