@@ -18,7 +18,7 @@ This project aims to add support the [Exposure Notification (EN) protocol for tr
 * Upon infection upload keys to a public database
 * Retrieve keys of infections from database
   * computes rolling proximity identifiers 
-  * compares to stored contacts to check for exposure 
+  * compares to stored contacts to check for exposure b
 
 Note: as we for now do not use the flash for key storage, this currently only works on nrf52480 or you can just store a very small number of keys. Moving the keys to flash is on the TODO list and will fix this. 
 
@@ -83,3 +83,11 @@ Possible platforms for real-world deployment many, as many of the cheap fitness 
 However, many would need the firmware to be shipped to manufactures.
 * Watch UI
 * Pine Time could be good for testing
+
+## Display
+
+A basic visual interface based on LVGL is included.
+It can be tested on POSIX-compliant platforms by building it with the `zephyr/build_native.sh` script.
+SDL must be installed to provide a virtual display.
+
+![No risk contacts](img/display_no_risk.png) ![Low risk](img/display_low_risk.png) ![High risk](img/display_high_risk.png)
