@@ -175,6 +175,7 @@ int display_set_message(char* msg) {
 }
 
 int display_set_time(int time) {
+	lv_label_set_text_fmt(display_clock_label, "%d:%d", time / 100, time % 100)
 	return 0;
 }
 
