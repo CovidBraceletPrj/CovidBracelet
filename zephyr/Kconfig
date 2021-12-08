@@ -5,7 +5,7 @@ config ENS_MAX_CONTACTS
     int "Max contacts in storage"
     default 2048
     help
-      The maximum amount of contacts, that can be stored on the devies. Needs to be a power of 2!
+      The maximum amount of contacts, that can be stored on the devices. Needs to be a power of 2!
 
 endmenu
 
@@ -20,4 +20,27 @@ config TEST_UNPACK_KEYS
     default n
     select TIMING_FUNCTIONS
 
+endmenu
+
+menu "Contact Tests"
+
+config TEST_RECORDS_PER_INTERVAL
+  int "Records per interval"
+  default 120
+  help
+    Number of records per interval.
+
+config TEST_INFECTED_RATE
+  int ""
+  range 0 100
+  default 1
+  help
+    The rate for infected intervals in test data.
+
+config CONTACTS_PERFORM_RISC_CHECK_TEST
+  bool ""
+  default n
+  help 
+    Flag for performing tests.
+    
 endmenu

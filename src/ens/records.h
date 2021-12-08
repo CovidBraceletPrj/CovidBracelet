@@ -11,9 +11,21 @@
 #include "storage.h"
 
 typedef struct record_iterator {
+    /**
+     * @internal
+     */
     record_t current;
+    /**
+     * @internal
+     */
     record_sequence_number_t sn_next;
+    /**
+     * @internal
+     */
     record_sequence_number_t sn_end;  // the last sn to include
+    /**
+     * @internal
+     */
     uint8_t finished;
 } record_iterator_t;
 

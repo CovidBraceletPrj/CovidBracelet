@@ -30,6 +30,11 @@ typedef struct stored_records_information {
 int init_record_storage(bool clean);
 
 /**
+ * Reset state of record storage.
+ */
+int reset_record_storage();
+
+/**
  * Loads the record with number sn into the destination struct
  * @param dest
  * @param sn
@@ -70,7 +75,6 @@ record_sequence_number_t get_oldest_sequence_number();
  */
 uint32_t get_num_records();
 
-
-int get_sequence_number_interval(record_sequence_number_t* oldest, record_sequence_number_t *latest);
+int get_sequence_number_interval(record_sequence_number_t* oldest, record_sequence_number_t* latest);
 
 #endif
