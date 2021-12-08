@@ -5,7 +5,7 @@
 
 void process_key(TemporaryExposureKey*);
 
-size_t generate_keys(uint8_t**, size_t, int);
+size_t generate_keys(uint8_t**, int);
 
 int unpack_keys(uint8_t*, size_t) ;
 

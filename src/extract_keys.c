@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/printk.h>
+#include <timing/timing.h>
 #include <zephyr.h>
 
 #include <protobuf-c.h>
@@ -8,32 +9,27 @@
 #include "export.pb-c.h"
 #include "extract_keys.h"
 
-
 #define KEY_SIZE 16
 #ifndef PROTOBUF_BLOCK_SIZE
 #define PROTOBUF_BLOCK_SIZE 0
 #endif
-#define EXPORT_BUFFER_SIZE 100000
+// #define EXPORT_BUFFER_SIZE 100000
 
 void process_key(TemporaryExposureKey* key) {
-    printk("Attempting to process key\n");
-    // #if !COVID_MEASURE_PERFORMANCE
-    if (key) {
-        if (key->has_key_data) {
-            int len = (key->key_data.len) + 1;
-            char data[len + 1];
-            memcpy(data, key->key_data.data, len - 1);
-            data[len] = 0;
-            printk("New key: %s\n", data);
-        }
-    }
-    // #endif
+    // if (key) {
+    //     if (key->has_key_data) {
+    //         int len = (key->key_data.len) + 1;
+    //         char data[len + 1];
+    //         memcpy(data, key->key_data.data, len - 1);
+    //         data[len] = 0;
+    //     }
+    // }
 }
 
-size_t generate_keys(uint8_t** buffer_pointer, size_t max_size, int num_keys) {
+size_t generate_keys(uint8_t** buffer_pointer, int num_keys) {
     TemporaryExposureKeyExport export = TEMPORARY_EXPOSURE_KEY_EXPORT__INIT;
     // temporary_exposure_key_export__init(&export);
-    TemporaryExposureKey** key_ptrs = (TemporaryExposureKey**) k_malloc(sizeof(TemporaryExposureKey*) * num_keys);
+    TemporaryExposureKey** key_ptrs = (TemporaryExposureKey**)k_malloc(sizeof(TemporaryExposureKey*) * num_keys);
     if (key_ptrs == NULL) {
         printk("Could not allocate memory for pointers\n");
         return 0;
@@ -80,9 +76,8 @@ int unpack_keys(uint8_t* buf, size_t buf_size) {
         printk("error unpacking incoming message\n");
         return -2;
     }
-    printk("Buffer %s\n", buf);
-    printk("Batch num: %d, batch size: %d\n", export->batch_num, export->batch_size);
-    printk("Number of keys: %d\n", export->n_keys);
+
+    printk("Num keys %d\n", export->n_keys);
     // Iterate over new keys
     for (int i = 0; i < export->n_keys; i++) {
         TemporaryExposureKey* key = export->keys[i];
@@ -98,12 +93,25 @@ int unpack_keys(uint8_t* buf, size_t buf_size) {
 }
 
 int test_unpacking(int num_keys) {
+    timing_t start_time, end_time;
+    uint64_t total_cycles;
+    uint64_t total_ns;
+
     uint8_t* buffer;
-    printk("Test unpacking %d keys\n", num_keys);
-    size_t buffer_size = generate_keys(&buffer, EXPORT_BUFFER_SIZE, num_keys);
+    size_t buffer_size = generate_keys(&buffer, num_keys);
+
+    timing_init();
+    timing_start();
     if (buffer_size) {
+        start_time = timing_counter_get();
         unpack_keys(buffer, buffer_size);
+        end_time = timing_counter_get();
     }
+
+    total_cycles = timing_cycles_get(&start_time, &end_time);
+    total_ns = timing_cycles_to_ns(total_cycles);
+    printk("\nUnpacking %d keys took %lld us\n\n", num_keys, total_ns / 1000);
+    timing_stop();
     k_free(buffer);
     return 0;
 }
