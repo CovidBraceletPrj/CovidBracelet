@@ -10,25 +10,14 @@
 #include "extract_keys.h"
 
 #define KEY_SIZE 16
-#ifndef PROTOBUF_BLOCK_SIZE
-#define PROTOBUF_BLOCK_SIZE 0
-#endif
-// #define EXPORT_BUFFER_SIZE 100000
 
 void process_key(TemporaryExposureKey* key) {
-    // if (key) {
-    //     if (key->has_key_data) {
-    //         int len = (key->key_data.len) + 1;
-    //         char data[len + 1];
-    //         memcpy(data, key->key_data.data, len - 1);
-    //         data[len] = 0;
-    //     }
-    // }
+    // TODO: Implement
 }
 
 size_t generate_keys(uint8_t** buffer_pointer, int num_keys) {
     TemporaryExposureKeyExport export = TEMPORARY_EXPOSURE_KEY_EXPORT__INIT;
-    // temporary_exposure_key_export__init(&export);
+
     TemporaryExposureKey** key_ptrs = (TemporaryExposureKey**)k_malloc(sizeof(TemporaryExposureKey*) * num_keys);
     if (key_ptrs == NULL) {
         printk("Could not allocate memory for pointers\n");
@@ -36,13 +25,13 @@ size_t generate_keys(uint8_t** buffer_pointer, int num_keys) {
     }
     export.batch_num = 1;
     export.batch_size = 1;
-    // TemporaryExposureKey* key_ptrs[num_keys];
+
     uint8_t key_data[KEY_SIZE];
     for (int i = 0; i < KEY_SIZE; i++) {
         key_data[i] = 0xFF;
     }
+
     TemporaryExposureKey key = TEMPORARY_EXPOSURE_KEY__INIT;
-    // temporary_exposure_key__init(&key);
     key.key_data.data = key_data;
     key.key_data.len = KEY_SIZE;
     key.has_key_data = true;
@@ -77,7 +66,6 @@ int unpack_keys(uint8_t* buf, size_t buf_size) {
         return -2;
     }
 
-    printk("Num keys %d\n", export->n_keys);
     // Iterate over new keys
     for (int i = 0; i < export->n_keys; i++) {
         TemporaryExposureKey* key = export->keys[i];
