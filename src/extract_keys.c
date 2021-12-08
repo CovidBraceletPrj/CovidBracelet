@@ -16,6 +16,7 @@ void process_key(TemporaryExposureKey* key) {
 }
 
 size_t generate_keys(uint8_t** buffer_pointer, int num_keys) {
+    // Initialize the key export data structure
     TemporaryExposureKeyExport export = TEMPORARY_EXPOSURE_KEY_EXPORT__INIT;
 
     TemporaryExposureKey** key_ptrs = (TemporaryExposureKey**)k_malloc(sizeof(TemporaryExposureKey*) * num_keys);
@@ -26,20 +27,24 @@ size_t generate_keys(uint8_t** buffer_pointer, int num_keys) {
     export.batch_num = 1;
     export.batch_size = 1;
 
+    // Initialize the keys and their data
     uint8_t key_data[KEY_SIZE];
     for (int i = 0; i < KEY_SIZE; i++) {
         key_data[i] = 0xFF;
     }
-
     TemporaryExposureKey key = TEMPORARY_EXPOSURE_KEY__INIT;
     key.key_data.data = key_data;
     key.key_data.len = KEY_SIZE;
     key.has_key_data = true;
+
+    // All pointers will point to the same key. The protocol buffer will still have n keys encoded
     for (int i = 0; i < num_keys; i++) {
         key_ptrs[i] = &key;
     }
     export.n_keys = num_keys;
     export.keys = key_ptrs;
+
+    // Check size allocate memory and pack the buffer
     size_t required_buffer = temporary_exposure_key_export__get_packed_size(&export);
     uint8_t* buffer = (uint8_t*) k_malloc(required_buffer);
     if (buffer == NULL) {
@@ -81,13 +86,16 @@ int unpack_keys(uint8_t* buf, size_t buf_size) {
 }
 
 int test_unpacking(int num_keys) {
+    // Prepare time measurement
     timing_t start_time, end_time;
     uint64_t total_cycles;
     uint64_t total_ns;
 
+    // Generate Buffer
     uint8_t* buffer;
     size_t buffer_size = generate_keys(&buffer, num_keys);
 
+    // Test unpacking
     timing_init();
     timing_start();
     if (buffer_size) {
@@ -96,10 +104,12 @@ int test_unpacking(int num_keys) {
         end_time = timing_counter_get();
     }
 
+    // Calculate measurements
     total_cycles = timing_cycles_get(&start_time, &end_time);
     total_ns = timing_cycles_to_ns(total_cycles);
     printk("\nUnpacking %d keys took %lld us\n\n", num_keys, total_ns / 1000);
     timing_stop();
+
     k_free(buffer);
     return 0;
 }
