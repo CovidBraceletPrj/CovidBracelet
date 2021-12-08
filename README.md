@@ -54,6 +54,9 @@ The devices need to be initialized:
 * Get infections from DB, Check their signatures
 * Secure GATT services and authentication of base statation in general
 * Read keys form national databases
+  * Functions to extract keys from googles official [exposure key export file format](https://developers.google.com/android/exposure-notifications/exposure-key-file-format) are already implemented
+  * For full integration the keys have to be downloaded from the national servers (due to limited memory an intermediate server which provides small batches of keys is advised)
+  * Also the keys have to checked against the stored contacts (for this the `process_key`-function in `extract_keys.c` has to be implemented)
 
 ### Extract Keys from Device
 In case of an infection, the keys need to be extracted from the device:
@@ -91,3 +94,9 @@ It can be tested on POSIX-compliant platforms by building it with the `zephyr/bu
 SDL must be installed to provide a virtual display.
 
 ![No risk contacts](img/display_no_risk.png) ![Low risk](img/display_low_risk.png) ![High risk](img/display_high_risk.png)
+
+## Exposure Key Extraction
+
+Exposure keys can be unpacked from their protocol buffer.
+The unpacking can be tested, by setting the `TEST_UNPACK_KEYS=y` and `TEST_UNPACK_KEYS_N=n` config variables.
+The test will run first thing at startup and output the time, it took unpacking and iterating over the keys.
