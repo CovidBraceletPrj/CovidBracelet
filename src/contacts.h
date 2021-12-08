@@ -56,9 +56,6 @@ int get_number_of_infected_for_period(ENPeriodKey* key, time_t timestamp);
  */
 // int get_number_of_infected_for_multiple_intervals(infected_for_period_key_ctx_t* ctx, int count);
 
-/**
- * Setup fixed test data for storage.
- */
-void setup_test_data();
+int init_contacts();
 
 #endif

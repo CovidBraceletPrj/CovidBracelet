@@ -47,7 +47,12 @@ void main(void) {
         printk("init storage failed (err %d)\n", err);
         return;
     }
-    // setup_test_data();
+
+    err = init_contacts();
+    if (err) {
+        printk("init contacts failed (err %d)\n", err);
+        return;
+    }
 #endif
 
     err = init_io();
