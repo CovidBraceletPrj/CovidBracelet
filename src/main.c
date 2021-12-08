@@ -15,12 +15,19 @@
 #include "covid_types.h"
 #include "ens/storage.h"
 #include "exposure-notification.h"
+#include "extract_keys.h"
 #include "gatt_service.h"
 #include "io.h"
 #include "display.h"
 
 
 void main(void) {
+    #if CONFIG_TEST_UNPACK_KEYS
+    for (int i = 0; i < CONFIG_TEST_UNPACK_KEYS_N; i++) {
+        test_unpacking(1 << i);
+    }
+    #endif
+
     int err = 0;
     printk("Starting Covid Contact Tracer\n");
 

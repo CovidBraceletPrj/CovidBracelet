@@ -8,3 +8,16 @@ config ENS_MAX_CONTACTS
       The maximum amount of contacts, that can be stored on the devies. Needs to be a power of 2!
 
 endmenu
+
+menu "Protobuf"
+
+config TEST_UNPACK_KEYS_N
+    int ""
+    default 0
+
+config TEST_UNPACK_KEYS
+    bool ""
+    default n
+    select TIMING_FUNCTIONS
+
+endmenu
