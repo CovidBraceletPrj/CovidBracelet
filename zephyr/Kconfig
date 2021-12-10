@@ -41,6 +41,17 @@ config CONTACTS_PERFORM_RISC_CHECK_TEST
   bool ""
   default n
   help 
-    Flag for performing tests.
-    
+    Flag for performing tests. WARNING: This deletes all currently stored records.
+
+config CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT
+  int ""
+  default 1024
+  help
+    Amount of interval identifiers to test against stored test data. 
+
+config CONFIG_CONTACTS_BLOOM_REVERSE 
+  bool ""
+  default n
+  help
+    Flag for toggling between bloom variants. Yes means, that the reverse bloom filter is used.
 endmenu

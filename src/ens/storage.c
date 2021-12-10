@@ -108,7 +108,7 @@ int init_record_storage(bool clean) {
     return rc;
 }
 
-int reset_record_storage() {
+void reset_record_storage() {
     k_mutex_lock(&info_fs_lock, K_FOREVER);
     record_information.count = 0;
     record_information.oldest_contact = 0;

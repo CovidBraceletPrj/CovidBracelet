@@ -4,7 +4,7 @@
 #include "ens/storage.h"
 #include "exposure-notification.h"
 
-typedef struct bloom_filter {
+typedef struct {
     uint8_t* data;
     size_t size;
 } bloom_filter_t;
