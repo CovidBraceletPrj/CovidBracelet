@@ -49,7 +49,7 @@ config CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT
   help
     Amount of interval identifiers to test against stored test data. 
 
-config CONFIG_CONTACTS_BLOOM_REVERSE 
+config CONTACTS_BLOOM_REVERSE 
   bool ""
   default n
   help
