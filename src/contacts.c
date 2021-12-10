@@ -37,7 +37,7 @@ void print_key(_ENBaseKey* key) {
 
 void print_rpi(rolling_proximity_identifier_t* rpi) {
     for (int i = 0; i < sizeof(rolling_proximity_identifier_t); i++) {
-        printk("%02x", rpi->data[i]);
+        printk("%02x", rpi->b[i]);
     }
 }
 
@@ -48,12 +48,7 @@ void print_aem(associated_encrypted_metadata_t* aem) {
 }
 
 int register_record(record_t* record) {
-    int rc = add_record(record);
-    if (rc) {
-        return rc;
-    }
-    // rc = bloom_add_record(record);
-    return rc;
+    return add_record(record);
 }
 
 /**
@@ -68,7 +63,7 @@ int get_number_of_infected_for_multiple_intervals_simple(infected_for_interval_i
             continue;
         }
         record_t* current;
-        while (current = ens_records_iterator_next(&iterator)) {
+        while ((current = ens_records_iterator_next(&iterator))) {
             if (memcmp(&(current->rolling_proximity_identifier), &ctx[i].interval_identifier,
                        sizeof(rolling_proximity_identifier_t)) == 0) {
                 ctx[i].infected++;
@@ -92,7 +87,7 @@ void fill_bloom_with_stored_records(bloom_filter_t* bloom) {
 
     // fill bloom filter with records
     record_t* current;
-    while (current = ens_records_iterator_next(&iterator)) {
+    while ((current = ens_records_iterator_next(&iterator))) {
         bloom_add_record(bloom, &(current->rolling_proximity_identifier));
     }
 }
@@ -100,7 +95,7 @@ void fill_bloom_with_stored_records(bloom_filter_t* bloom) {
 /**
  * Fill the bloom filter with flash records and test passed RPIs against it.
  */
-int64_t test_bloom_performance(infected_for_interval_ident_ctx_t* ctx, int count) {
+int64_t bloom_filter(infected_for_interval_ident_ctx_t* ctx, int count) {
     bloom_filter_t* bloom = bloom_init(get_num_records() * 2);
     if (!bloom) {
         printk("bloom init failed\n");
@@ -211,17 +206,13 @@ int reverse_bloom_filter(infected_for_interval_ident_ctx_t* ctx, int count) {
     }
 
     record_t* current;
-    while (current = ens_records_iterator_next(&iterator)) {
+    while ((current = ens_records_iterator_next(&iterator))) {
         if (bloom_probably_has_record(bloom, &(current->rolling_proximity_identifier))) {
             for (int i = 0; i < count; i++) {
                 if (memcmp(&(current->rolling_proximity_identifier), &ctx[i].interval_identifier,
                            sizeof(current->rolling_proximity_identifier)) == 0) {
                     ctx[i].infected = 1;
                     amount++;
-                    break;
-                }
-                // TODO lome: maybe dont require orderred array, so this is not useful
-                if (current->timestamp > ctx[i].search_end) {
                     break;
                 }
             }
@@ -266,52 +257,46 @@ void setup_test_data() {
             }
         }
     }
-
-#define INFECTED_INTERVALS_COUNT 2000
-    // setup our ordered array with infected RPIs
-    static infected_for_interval_ident_ctx_t infectedIntervals[INFECTED_INTERVALS_COUNT];
-
-    printk("Starting measurements with %d RPIs to seach and an infection rate of %d\n", INFECTED_INTERVALS_COUNT,
-           CONFIG_TEST_INFECTED_RATE);
-
-    // measure_perf(get_number_of_infected_for_multiple_intervals_dumb, "dumb", infectedIntervals,
-    //              INFECTED_INTERVALS_COUNT);
-    // measure_perf(get_number_of_infected_for_multiple_intervals_simple, "simple", infectedIntervals,
-    //              INFECTED_INTERVALS_COUNT);
-    // measure_perf(get_number_of_infected_for_multiple_intervals_optimized, "optimized", infectedIntervals,
-    //              INFECTED_INTERVALS_COUNT);
-
-    // measure_perf(test_bloom_performance, "bloom", infectedIntervals, INFECTED_INTERVALS_COUNT);
-
-    measure_perf(reverse_bloom_filter, "bloom reverse", infectedIntervals, INFECTED_INTERVALS_COUNT);
 }
 
 int init_contacts() {
 #if CONFIG_CONTACTS_PERFORM_RISC_CHECK_TEST
+    reset_record_storage();
     setup_test_data();
+
+    // setup our ordered array with infected RPIs
+    static infected_for_interval_ident_ctx_t infectedIntervals[CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT];
+
+    printk("Starting measurements with %d RPIs to seach and an infection rate of %d\n",
+           CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT, CONFIG_TEST_INFECTED_RATE);
+
+    measure_perf(check_possible_contacts_for_intervals, "bloom reverse", infectedIntervals,
+                 CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT);
 #endif
     return 0;
 }
 
-/**
- * Check for a list of specified interval identifiers, whether they were probably met or not.
- * @param ctx list of interval identifiers to check
- * @param count amount of identifiers to check
- * @return the amount of met intervals, -ERRNO on error
- */
 int check_possible_contacts_for_intervals(infected_for_interval_ident_ctx_t* ctx, int count) {
+#if CONFIG_CONTACTS_BLOOM_REVERSE
     return reverse_bloom_filter(ctx, count);
+#else
+    return bloom_filter(ctx, count);
+#endif
 }
 
-typedef struct {
-    ENPeriodKey periodKey;
-    time_t start;
-    time_t end;
-    int met;
-} period_key_information_t;
-
-// TODO lome: needed?
-int check_possible_contacts_for_periods(period_key_information_t* periodKey, int count) {
-    infected_for_interval_ident_ctx_t intervalIdents[count * 144];
-    return check_possible_contacts_for_intervals(intervalIdents, 0);
+int check_possible_contacts_for_periods(period_key_information_t periodKeyInformation[], int count) {
+    for (int i = 0; i < count; i++) {
+        static infected_for_interval_ident_ctx_t intervalIdents[EN_TEK_ROLLING_PERIOD];
+        int periodStart = en_get_interval_number(periodKeyInformation[i].start);
+        for (int interval = 0; interval < EN_TEK_ROLLING_PERIOD; interval++) {
+            en_derive_interval_identifier(&intervalIdents[interval].interval_identifier,
+                                          &periodKeyInformation[i].periodKey, periodStart + interval);
+        }
+        int rc = check_possible_contacts_for_intervals(intervalIdents, 0);
+        if (rc < 0) {
+            return rc;
+        }
+        periodKeyInformation[i].met = rc;
+    }
+    return 0;
 }

@@ -32,7 +32,7 @@ int init_record_storage(bool clean);
 /**
  * Reset state of record storage.
  */
-int reset_record_storage();
+void reset_record_storage();
 
 /**
  * Loads the record with number sn into the destination struct
