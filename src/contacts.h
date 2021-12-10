@@ -17,7 +17,7 @@
 
 typedef struct {
     ENIntervalIdentifier interval_identifier;
-    int infected;
+    int met;
     time_t search_start;
     time_t search_end;
 } __packed infected_for_interval_ident_ctx_t;
