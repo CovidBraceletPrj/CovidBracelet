@@ -265,13 +265,13 @@ int init_contacts() {
     setup_test_data();
 
     // setup our ordered array with infected RPIs
-    static infected_for_interval_ident_ctx_t infectedIntervals[CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT];
+    static infected_for_interval_ident_ctx_t infectedIntervals[CONFIG_CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT];
 
     printk("Starting measurements with %d RPIs to seach and an infection rate of %d\n",
-           CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT, CONFIG_TEST_INFECTED_RATE);
+           CONFIG_CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT, CONFIG_TEST_INFECTED_RATE);
 
-    measure_perf(check_possible_contacts_for_intervals, "bloom reverse", infectedIntervals,
-                 CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT);
+    measure_perf(check_possible_contacts_for_intervals, "bloom filter", infectedIntervals,
+                 CONFIG_CONTACTS_RISC_CHECK_TEST_PUBLIC_INTERVAL_COUNT);
 #endif
     return 0;
 }
