@@ -3,7 +3,7 @@
 
 #include <zephyr/types.h>
 
-#include "../covid_types.h"
+#include "covid_types.h"
 #include "sequencenumber.h"
 
 typedef uint64_t storage_id_t;

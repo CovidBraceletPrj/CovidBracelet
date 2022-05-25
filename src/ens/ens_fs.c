@@ -6,8 +6,8 @@
 #include <string.h>
 #include <sys/crc.h>
 
-#include "ens_error.h"
-#include "ens_fs.h"
+#include "ens/ens_error.h"
+#include "ens/ens_fs.h"
 
 #define SEED 42
 

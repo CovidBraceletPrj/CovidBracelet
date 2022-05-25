@@ -7,10 +7,10 @@
 #include <string.h>
 #include <zephyr.h>
 
-#include "ens_error.h"
-#include "ens_fs.h"
-#include "sequencenumber.h"
-#include "storage.h"
+#include "ens/ens_error.h"
+#include "ens/ens_fs.h"
+#include "ens/sequencenumber.h"
+#include "ens/storage.h"
 
 #define STORED_CONTACTS_INFO_ID 0
 
