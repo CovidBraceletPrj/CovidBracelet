@@ -20,6 +20,8 @@
 #include "covid.h"
 #include "ens/storage.h"
 
+#include "util.h"
+
 #ifndef COVID_MEASURE_PERFORMANCE
 #define COVID_MEASURE_PERFORMANCE 0
 #endif
@@ -80,7 +82,7 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, str
 				{
                     printk("Attempting to store contact...\n");
                     record_t contact;
-                    uint32_t timestamp = k_uptime_get() / 1000;
+                    uint32_t timestamp = time_get_unix_seconds();
                     memcpy(&contact.rssi, &rssi, sizeof(contact.rssi));
                     memcpy(&contact.associated_encrypted_metadata, &rx_adv->associated_encrypted_metadata, sizeof(contact.associated_encrypted_metadata));
                     memcpy(&contact.rolling_proximity_identifier, &rx_adv->rolling_proximity_identifier, sizeof(contact.rolling_proximity_identifier));
@@ -285,7 +287,7 @@ static void check_keys(struct k_work *work)
 
 	// we check the current time to know if we actually need to regenerate anything
 	// TODO: Use real unix timestamp!: currentTime = time(NULL);
-	time_t currentTime = k_uptime_get() / 1000;
+	uint32_t currentTime = time_get_unix_seconds();
 	ENIntervalNumber newInterval = en_get_interval_number(currentTime);
 	if (currentInterval != newInterval || init)
 	{
@@ -309,7 +311,7 @@ static void check_keys(struct k_work *work)
 
 		// broadcast intervalIdentifier plus encryptedMetada according to specs
 		//printk("\n----------------------------------------\n\n");
-		printk("Time: %llu, ", currentTime);
+		printk("Time: %u, ", currentTime);
 		printk("Interval: %u, ", currentInterval);
 		printk("TEK: ");
 		print_rpi((rolling_proximity_identifier_t *)&periods[current_period_index].periodKey);
