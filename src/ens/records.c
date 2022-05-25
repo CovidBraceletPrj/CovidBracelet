@@ -1,11 +1,11 @@
 #include <string.h>
 
 #include <sys/types.h>
-#include "../covid_types.h"
-#include "ens_error.h"
-#include "records.h"
-#include "sequencenumber.h"
-#include "storage.h"
+#include "covid_types.h"
+#include "ens/ens_error.h"
+#include "ens/records.h"
+#include "ens/sequencenumber.h"
+#include "ens/storage.h"
 
 int ens_records_iterator_init_range(record_iterator_t* iterator,
                                     record_sequence_number_t* opt_start,
