@@ -26,7 +26,7 @@
 typedef ENIntervalIdentifier ENIntervalIdentifier;
 
 #define RPI_ROTATION_MS (11*60*1000)
-#define SCAN_INTERVAL_MS (1*60*1000)
+#define SCAN_INTERVAL_MS (10*1000)
 #define SCAN_DURATION_MS 1000
 #define ADV_INTERVAL_MS 220
 #define ADV_DURATION_MS 1000
@@ -70,7 +70,7 @@ int tracing_run()
         on_adv();
     }
 
-
+    k_sleep(K_MSEC(ADV_INTERVAL_MS)); // TODO: what to put here?
 
     //printk("covid start\n");
 
@@ -245,18 +245,14 @@ int on_scan() {
 
 int on_adv() {
     int err = 0;
-
-    err = bt_le_adv_start(BT_LE_ADV_NCONN, ad, ARRAY_SIZE(ad), NULL, 0);
+    err = bt_le_adv_start(BT_LE_ADV_PARAM(0, (ADV_INTERVAL_MS-10)/0.625, (ADV_INTERVAL_MS+10)/0.625, NULL), ad, ARRAY_SIZE(ad), NULL, 0);
     if (err)
     {
         printk("Advertising failed to start (err %d)\n", err);
         return err;
     }
-
-    k_sleep(K_MSEC(ADV_DURATION_MS)); // TODO: what to put here?
-
+    k_yield();
     err = bt_le_adv_stop();
-
     if (err)
     {
         printk("Advertising failed to stop (err %d)\n", err);
