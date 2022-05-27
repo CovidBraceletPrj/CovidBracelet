@@ -6,62 +6,41 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <zephyr.h>
+
 #include <bluetooth/hci.h>
 #include <random/rand32.h>
 #include <sys/printk.h>
 
-#include "bloom.h"
-#include "contacts.h"
-#include "covid.h"
-#include "covid_types.h"
-#include "display.h"
-#include "ens/storage.h"
-#include "exposure-notification.h"
-#include "extract_keys.h"
-#include "gatt_service.h"
-#include "io.h"
+#include "record_storage.h"
+#include "tek_storage.h"
+#include "sync_service.h"
+#include "tracing.h"
 
 void main(void) {
-    #if CONFIG_TEST_UNPACK_KEYS
-    for (int i = 0; i < CONFIG_TEST_UNPACK_KEYS_N; i++) {
-        test_unpacking(1 << i);
-    }
-    #endif
 
     int err = 0;
-    printk("Starting Covid Contact Tracer\n");
+    printk("Starting Contact-Tracing Wristband...\n");
 
-// first init everything
-#ifndef NATIVE_POSIX
     // Use custom randomization as the mbdet_tls context initialization messes with the Zeyhr BLE stack.
     err = en_init(sys_csrand_get);
     if (err) {
-        printk("Cyrpto init failed (err %d)\n", err);
+        printk("Crypto init failed (err %d)\n", err);
         return;
     }
-#endif
 
-#if CONFIG_FLASH
-    err = init_record_storage(false);
+    err = record_storage_init(false);
     if (err) {
-        printk("init storage failed (err %d)\n", err);
+        printk("init record storage failed (err %d)\n", err);
         return;
     }
 
-    err = init_contacts();
+    err = tek_storage_init(false);
     if (err) {
-        printk("init contacts failed (err %d)\n", err);
-        return;
-    }
-#endif
-
-    err = init_io();
-    if (err) {
-        printk("Button init failed (err %d)\n", err);
+        printk("init key storage failed (err %d)\n", err);
         return;
     }
 
-#if CONFIG_BT
     /* Initialize the Bluetooth Subsystem */
     err = bt_enable(NULL);
     if (err) {
@@ -69,29 +48,24 @@ void main(void) {
         return;
     }
 
-    printk("Bluetooth initialized\n");
-
-    err = init_gatt();
+    /* Initialize the Tracing Subsystem */
+    err = tracing_init();
     if (err) {
-        printk("init gatt failed(err %d)\n", err);
-        return;
-    }
-#endif
-
-    err = init_covid();
-    if (err) {
-        printk("init covid failed (err %d)\n", err);
+        printk("Tracing init failed (err %d)\n", err);
         return;
     }
 
-    printk("init display\n");
-    err = init_display();
+    /* Initialize the Gatt Subsystem */
+    err = sync_service_init();
     if (err) {
-        printk("init display failed (err %d)\n", err);
+        printk("Sync Service init failed (err %d)\n", err);
+        return;
     }
+
+    printk("Components initialized! Starting Tracing and Gatt...\n");
 
     do {
-        do_covid();
-        do_gatt();
+        tracing_run();
+        sync_service_run();
     } while (1);
 }

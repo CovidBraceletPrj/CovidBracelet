@@ -1,14 +1,13 @@
-/* io.h - Application main entry point */
-
 /*
  * Copyright (c) 2020 Olaf Landsiedel
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IO_H
-#define IO_H
+#ifndef TRACING_H
+#define TRACING_H
 
-int init_io();
+int tracing_init(void);
+int tracing_run(void);
 
 #endif

@@ -47,3 +47,4 @@ massif-*
 .vscode
 
 .DS_Store
+/.idea
