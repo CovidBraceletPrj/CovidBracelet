@@ -15,21 +15,29 @@
 #include <kernel.h>
 
 #include "exposure-notification.h"
-#include "covid_types.h"
-#include "contacts.h"
-#include "covid.h"
-#include "ens/storage.h"
+#include "tracing.h"
+#include "record_storage.h"
 
-#include "util.h"
+#include "utility/util.h"
 
-#ifndef COVID_MEASURE_PERFORMANCE
-#define COVID_MEASURE_PERFORMANCE 0
-#endif
+#define COVID_ENS (0xFD6F)
+
+typedef ENIntervalIdentifier ENIntervalIdentifier;
+
+
+
+
+
+typedef struct period{
+    ENPeriodKey periodKey;
+    ENIntervalNumber periodInterval;
+} __packed period_t;
+
 
 typedef struct covid_adv_svd
 {
 	uint16_t ens;
-	rolling_proximity_identifier_t rolling_proximity_identifier;
+	ENIntervalIdentifier rolling_proximity_identifier;
 	associated_encrypted_metadata_t associated_encrypted_metadata;
 } __packed covid_adv_svd_t;
 
@@ -39,8 +47,6 @@ const static bt_metadata_t bt_metadata = {
 	.rsv1 = 0,
 	.rsv2 = 0,
 };
-
-#define COVID_ENS (0xFD6F)
 
 static covid_adv_svd_t covid_adv_svd = {
 	.ens = COVID_ENS,
@@ -80,15 +86,15 @@ static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, str
 				covid_adv_svd_t *rx_adv = (covid_adv_svd_t *)buf->data;
 				if (rx_adv->ens == COVID_ENS)
 				{
-                    printk("Attempting to store contact...\n");
-                    record_t contact;
+                    printk("Attempting to store record...\n");
+                    record_t record;
                     uint32_t timestamp = time_get_unix_seconds();
-                    memcpy(&contact.rssi, &rssi, sizeof(contact.rssi));
-                    memcpy(&contact.associated_encrypted_metadata, &rx_adv->associated_encrypted_metadata, sizeof(contact.associated_encrypted_metadata));
-                    memcpy(&contact.rolling_proximity_identifier, &rx_adv->rolling_proximity_identifier, sizeof(contact.rolling_proximity_identifier));
-                    memcpy(&contact.timestamp, &timestamp, sizeof(contact.timestamp));
-                    int rc = register_record(&contact);
-                    printk("Contact stored (err %d)\n", rc);
+                    memcpy(&record.rssi, &rssi, sizeof(record.rssi));
+                    memcpy(&record.associated_encrypted_metadata, &rx_adv->associated_encrypted_metadata, sizeof(record.associated_encrypted_metadata));
+                    memcpy(&record.rolling_proximity_identifier, &rx_adv->rolling_proximity_identifier, sizeof(record.rolling_proximity_identifier));
+                    memcpy(&record.timestamp, &timestamp, sizeof(record.timestamp));
+                    int rc = add_record(&record);
+                    printk("Record stored (err %d)\n", rc);
 				}
 			}
 			net_buf_simple_pull(buf, len - 1); //consume the rest, note we already consumed one byte via net_buf_simple_pull_u8(buf)
@@ -167,120 +173,6 @@ static void new_period_key(time_t currentTime)
 	#endif
 }
 
-#if COVID_MEASURE_PERFORMANCE
-static void measure_performance()
-{
-
-	u32_t runs = 100;
-	u32_t start_time;
-	u32_t cycles_spent;
-	u32_t nanoseconds_spent;
-
-	ENPeriodKey pk;
-
-	ENPeriodIdentifierKey pik;
-	ENIntervalIdentifier intervalIdentifier;
-	ENIntervalNumber intervalNumber = 2642976;
-	ENIntervalIdentifier id;
-	ENPeriodMetadataEncryptionKey pmek;
-	unsigned char metadata[4] = {0x40, 0x08, 0x00, 0x00};
-	unsigned char encryptedMetadata[sizeof(metadata)] = {0};
-
-	printk("\n----------------------------------------\n");
-	printk("MEASURING PERFORMANCE\n");
-
-	// Measure en_generate_period_key
-	{
-		start_time = k_cycle_get_32();
-
-		for (int i = 0; i < runs; i++)
-		{
-			en_generate_period_key(&pk);
-		}
-
-		nanoseconds_spent = SYS_CLOCK_HW_CYCLES_TO_NS(k_cycle_get_32() - start_time);
-		printk("en_generate_period_key %d ns\n", nanoseconds_spent/runs);
-	}
-
-	// Measure en_derive_period_identifier_key
-	{
-		start_time = k_cycle_get_32();
-
-		for (int i = 0; i < runs; i++)
-		{
-			en_derive_period_identifier_key(&pik, &pk);
-		}
-
-		nanoseconds_spent = SYS_CLOCK_HW_CYCLES_TO_NS(k_cycle_get_32() - start_time);
-		printk("en_derive_period_identifier_key %d ns\n", nanoseconds_spent/runs);
-	}
-
-	// Measure en_derive_interval_identifier
-	{
-		start_time = k_cycle_get_32();
-
-		for (int i = 0; i < runs; i++)
-		{
-			en_derive_interval_identifier(&intervalIdentifier, &pik, intervalNumber);
-		}
-
-		nanoseconds_spent = SYS_CLOCK_HW_CYCLES_TO_NS(k_cycle_get_32() - start_time);
-		printk("en_derive_interval_identifier %d ns\n", nanoseconds_spent/runs);
-	}
-
-	// Measure en_derive_period_metadata_encryption_key
-	{
-		start_time = k_cycle_get_32();
-
-		for (int i = 0; i < runs; i++)
-		{
-			en_derive_period_metadata_encryption_key(&pmek, &pk);
-		}
-
-		nanoseconds_spent = SYS_CLOCK_HW_CYCLES_TO_NS(k_cycle_get_32() - start_time);
-		printk("en_derive_period_metadata_encryption_key %d ns\n", nanoseconds_spent/runs);
-	}
-
-	// Measure en_encrypt_interval_metadata
-	{
-		start_time = k_cycle_get_32();
-
-		for (int i = 0; i < runs; i++)
-		{
-			en_encrypt_interval_metadata(&pmek, &intervalIdentifier, metadata, encryptedMetadata, sizeof(metadata));
-		}
-
-		nanoseconds_spent = SYS_CLOCK_HW_CYCLES_TO_NS(k_cycle_get_32() - start_time);
-		printk("en_encrypt_interval_metadata %d ns\n", nanoseconds_spent/runs);
-	}
-
-	// Measure Full key generation
-	{
-		start_time = k_cycle_get_32();
-
-		for (int i = 0; i < runs; i++)
-		{
-			ENPeriodKey pk;
-			en_generate_period_key(&pk);
-			ENPeriodIdentifierKey ik;
-			en_derive_period_identifier_key(&ik, &pk);
-
-			for(int iv = 0; iv < EN_TEK_ROLLING_PERIOD; iv++) {
-				ENIntervalNumber intervalNumber = en_get_interval_number(iv);
-				ENIntervalIdentifier id;
-				en_derive_interval_identifier(&id, &ik, intervalNumber);
-			}
-		}
-
-		nanoseconds_spent = SYS_CLOCK_HW_CYCLES_TO_NS(k_cycle_get_32() - start_time);
-		printk("Full key generation %d ns\n", nanoseconds_spent/runs);
-	}
-
-	printk("\FINISHED\n");
-	printk("----------------------------------------\n\n");
-}
-#endif
-
 //To be called when new keys are needed
 static void check_keys(struct k_work *work)
 {
@@ -314,10 +206,10 @@ static void check_keys(struct k_work *work)
 		printk("Time: %u, ", currentTime);
 		printk("Interval: %u, ", currentInterval);
 		printk("TEK: ");
-		print_rpi((rolling_proximity_identifier_t *)&periods[current_period_index].periodKey);
+		print_rpi((ENIntervalIdentifier *)&periods[current_period_index].periodKey);
 		printk(", ");
 		printk("RPI: ");
-		print_rpi((rolling_proximity_identifier_t *)&intervalIdentifier);
+		print_rpi((ENIntervalIdentifier *)&intervalIdentifier);
 		printk(", ");
 		printk("AEM: ");
 		print_aem(&encryptedMetadata);
@@ -325,7 +217,7 @@ static void check_keys(struct k_work *work)
 		
 		// lock, so we can be sure to only advertise correct packages 
 		k_mutex_lock(&key_change_lock, K_FOREVER);
-		memcpy(&covid_adv_svd.rolling_proximity_identifier, &intervalIdentifier, sizeof(rolling_proximity_identifier_t));
+		memcpy(&covid_adv_svd.rolling_proximity_identifier, &intervalIdentifier, sizeof(ENIntervalIdentifier));
 		memcpy(&covid_adv_svd.associated_encrypted_metadata, &encryptedMetadata, sizeof(associated_encrypted_metadata_t));
 		k_mutex_unlock(&key_change_lock);
 
@@ -351,7 +243,7 @@ static const struct bt_le_scan_param scan_param = {
 
 #define KEY_CHECK_INTERVAL (K_MSEC(EN_INTERVAL_LENGTH * 1000 / 10))
 
-int init_covid()
+int tracing_init()
 {
 
 #if COVID_MEASURE_PERFORMANCE
@@ -383,7 +275,7 @@ int init_covid()
 	return 0;
 }
 
-int do_covid()
+int tracing_run()
 {
 	//printk("covid start\n");
 
@@ -444,18 +336,4 @@ period_t *get_period_if_infected(unsigned int id, size_t *size)
 	}
 	*size = sizeof(period_t);
 	return &periods[id];
-}
-
-int get_index_by_interval(ENIntervalNumber periodInterval)
-{
-	int index = 0;
-	while (index < NUM_PERIOD_KEYS || index < period_cnt)
-	{
-		if (periods[index].periodInterval == periodInterval)
-		{
-			return index;
-		}
-		index++;
-	}
-	return -1;
 }

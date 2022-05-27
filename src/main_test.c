@@ -9,10 +9,10 @@
 #include <zephyr.h>
 #include <sys/printk.h>
 
-
-void main(void) {
+void main_test(void) {
     while(1) {
 
         printk("Hello World!\n");
+        k_msleep(1000);
     }
 }

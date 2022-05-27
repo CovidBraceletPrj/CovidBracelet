@@ -1,4 +1,4 @@
-#include "ens/sequencenumber.h"
+#include "utility/sequencenumber.h"
 
 #define SN_MASK 0xffffff
 
