@@ -26,10 +26,9 @@
 typedef ENIntervalIdentifier ENIntervalIdentifier;
 
 #define RPI_ROTATION_MS (11*60*1000)
-#define SCAN_INTERVAL_MS (10*1000)
+#define SCAN_INTERVAL_MS (60*1000)
 #define SCAN_DURATION_MS 1000
 #define ADV_INTERVAL_MS 220
-#define ADV_DURATION_MS 1000
 
 
 K_TIMER_DEFINE(rpi_timer, NULL, NULL);
@@ -49,14 +48,10 @@ int tracing_init()
     k_timer_start(&adv_timer, K_MSEC(ADV_INTERVAL_MS), K_MSEC(ADV_INTERVAL_MS));
 
 
-
-
-
-
     return 0;
 }
 
-int tracing_run()
+uint32_t tracing_run()
 {
     if (k_timer_status_get(&rpi_timer) > 0) {
         on_rpi();
@@ -70,13 +65,10 @@ int tracing_run()
         on_adv();
     }
 
-    k_sleep(K_MSEC(ADV_INTERVAL_MS)); // TODO: what to put here?
-
-    //printk("covid start\n");
-
-
-    //printk("covid end\n");
-    return 0;
+    // we return the minimum timer time so that main can sleep
+    return MIN( k_timer_remaining_get(&rpi_timer),
+                MIN(k_timer_remaining_get(&scan_timer),
+                    k_timer_remaining_get(&adv_timer)));
 }
 
 

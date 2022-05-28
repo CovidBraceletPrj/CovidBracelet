@@ -65,7 +65,11 @@ void main(void) {
     printk("Components initialized! Starting Tracing and Gatt...\n");
 
     do {
-        tracing_run();
-        sync_service_run();
+        uint32_t tracing_sleep_ms = tracing_run();
+        uint32_t sync_sleep_ms = sync_service_run();
+
+        uint32_t sleep_ms = MIN(tracing_sleep_ms, sync_sleep_ms);
+        //printk("Sleeping a bit (%u ms)...\n", sleep_ms);
+        k_sleep(K_MSEC(sleep_ms)); // TODO: what to put here?
     } while (1);
 }

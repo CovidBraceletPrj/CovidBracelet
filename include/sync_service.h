@@ -8,6 +8,6 @@
 #define SYNC_SERVICE_H
 
 int sync_service_init(void);
-int sync_service_run(void);
+uint32_t sync_service_run(void);
 
 #endif
