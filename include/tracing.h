@@ -8,6 +8,6 @@
 #define TRACING_H
 
 int tracing_init(void);
-int tracing_run(void);
+uint32_t tracing_run(void);
 
 #endif
