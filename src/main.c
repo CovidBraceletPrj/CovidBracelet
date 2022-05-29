@@ -64,6 +64,9 @@ void main(void) {
 
     printk("Components initialized! Starting Tracing and Gatt...\n");
 
+    // We sleep for one second just
+    k_sleep(K_MSEC(1000));
+
     do {
         uint32_t tracing_sleep_ms = tracing_run();
         uint32_t sync_sleep_ms = sync_service_run();
