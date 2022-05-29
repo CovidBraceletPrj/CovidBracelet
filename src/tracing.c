@@ -26,51 +26,64 @@
 typedef ENIntervalIdentifier ENIntervalIdentifier;
 
 #define RPI_ROTATION_MS (11*60*1000)
-#define SCAN_INTERVAL_MS (60*1000)
+#define SCAN_INTERVAL_MS (4*1000)
 #define SCAN_DURATION_MS 1000
-#define ADV_INTERVAL_MS 220
+#define ADV_INTERVAL_MS 250
 
 
 K_TIMER_DEFINE(rpi_timer, NULL, NULL);
 K_TIMER_DEFINE(scan_timer, NULL, NULL);
-K_TIMER_DEFINE(adv_timer, NULL, NULL);
 
 static int on_rpi();
 static int on_scan();
-static int on_adv();
 
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/hci.h>
+#include <bluetooth/hci_vs.h>
 
-int tracing_init()
+#include <sys/byteorder.h>
+
+#define DEVICE_BEACON_TXPOWER_NUM  6
+static const int8_t txp[DEVICE_BEACON_TXPOWER_NUM] = {0, -4, -8,
+                                                      -16, -20, -40};
+
+static void set_tx_power(int8_t tx_pwr_lvl)
 {
-    // We init the timers (which should run periodically!)
-    k_timer_start(&rpi_timer, K_NO_WAIT, K_MSEC(RPI_ROTATION_MS)); // we directly init the rpi timer, to be sure that this is triggered at the beginning
-    k_timer_start(&scan_timer, K_MSEC(SCAN_INTERVAL_MS), K_MSEC(SCAN_INTERVAL_MS));
-    k_timer_start(&adv_timer, K_MSEC(ADV_INTERVAL_MS), K_MSEC(ADV_INTERVAL_MS));
+    struct bt_hci_cp_vs_write_tx_power_level *cp;
+    struct bt_hci_rp_vs_write_tx_power_level *rp;
+    struct net_buf *buf, *rsp = NULL;
+    int err;
 
+    buf = bt_hci_cmd_create(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
+                            sizeof(*cp));
+    if (!buf) {
+        printk("Unable to allocate command buffer\n");
+        return;
+    }
 
-    return 0;
+    cp = net_buf_add(buf, sizeof(*cp));
+    cp->handle = sys_cpu_to_le16(0);
+    cp->handle_type = BT_HCI_VS_LL_HANDLE_TYPE_ADV;
+    cp->tx_power_level = tx_pwr_lvl;
+
+    err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
+                               buf, &rsp);
+    if (err) {
+        uint8_t reason = rsp ?
+                         ((struct bt_hci_rp_vs_write_tx_power_level *)
+                                 rsp->data)->status : 0;
+        printk("Set Tx power err: %d reason 0x%02x\n", err, reason);
+        return;
+    }
+
+    rp = (void *)rsp->data;
+    printk("Actual Tx Power: %d\n", rp->selected_tx_power);
+
+    net_buf_unref(rsp);
 }
 
-uint32_t tracing_run()
-{
-    if (k_timer_status_get(&rpi_timer) > 0) {
-        on_rpi();
-    }
 
-    if (k_timer_status_get(&scan_timer) > 0) {
-        on_scan();
-    }
-
-    if (k_timer_status_get(&adv_timer) > 0) {
-        on_adv();
-    }
-
-    // we return the minimum timer time so that main can sleep
-    return MIN( k_timer_remaining_get(&rpi_timer),
-                MIN(k_timer_remaining_get(&scan_timer),
-                    k_timer_remaining_get(&adv_timer)));
-}
-
+static int cur_tx_pwr = 0;
 
 
 
@@ -82,27 +95,92 @@ typedef struct period{
 
 typedef struct covid_adv_svd
 {
-	uint16_t ens;
-	ENIntervalIdentifier rolling_proximity_identifier;
-	associated_encrypted_metadata_t associated_encrypted_metadata;
+    uint16_t ens;
+    ENIntervalIdentifier rolling_proximity_identifier;
+    associated_encrypted_metadata_t associated_encrypted_metadata;
 } __packed covid_adv_svd_t;
 
 const static bt_metadata_t bt_metadata = {
-	.version = 0b00100000,
-	.tx_power = 0, //TODO set to actual transmit power
-	.rsv1 = 0,
-	.rsv2 = 0,
+        .version = 0b00100000,
+        .tx_power = 0, //TODO set to actual transmit power
+        .rsv1 = 0,
+        .rsv2 = 0,
 };
 
 static covid_adv_svd_t covid_adv_svd = {
-	.ens = COVID_ENS,
-	//do not initialiuze the rest of the packet, will write this later
+        .ens = COVID_ENS,
+        //do not initialiuze the rest of the packet, will write this later
 };
 
+
+
+
 static struct bt_data ad[] = {
-	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-	BT_DATA_BYTES(BT_DATA_UUID16_ALL, 0x6f, 0xfd), //0xFD6F Exposure Notification Service
-	BT_DATA(BT_DATA_SVC_DATA16, &covid_adv_svd, sizeof(covid_adv_svd_t))};
+        BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+        BT_DATA_BYTES(BT_DATA_UUID16_ALL, 0x6f, 0xfd), //0xFD6F Exposure Notification Service
+        BT_DATA(BT_DATA_SVC_DATA16, &covid_adv_svd, sizeof(covid_adv_svd_t))};
+
+int adv_start() {
+
+   return bt_le_adv_start(BT_LE_ADV_PARAM(0, (ADV_INTERVAL_MS-10)/0.625, (ADV_INTERVAL_MS+10)/0.625, NULL), ad, ARRAY_SIZE(ad), NULL, 0);
+}
+
+int adv_stop() {
+    return bt_le_adv_stop();
+}
+
+int tracing_init()
+{
+    // We init the timers (which should run periodically!)
+    k_timer_start(&rpi_timer, K_NO_WAIT, K_MSEC(RPI_ROTATION_MS)); // we directly init the rpi timer, to be sure that this is triggered at the beginning
+    k_timer_start(&scan_timer, K_MSEC(SCAN_INTERVAL_MS), K_MSEC(SCAN_INTERVAL_MS));
+
+
+    set_tx_power(txp[cur_tx_pwr]);
+
+    int err = 0;
+    err = adv_start();
+    if (err)
+    {
+        printk("Advertising failed to start (err %d)\n", err);
+        return err;
+    }
+
+
+    return 0;
+}
+
+uint32_t tracing_run()
+{
+    if (k_timer_status_get(&rpi_timer) > 0) {
+        on_rpi();
+    }
+
+    // TODO: Randomize the adv power!
+
+    if (k_timer_status_get(&scan_timer) > 0) {
+        int err = adv_stop();
+
+        if (err)
+        {
+            printk("Advertising failed to stop (err %d)\n", err);
+        }
+
+        on_scan();
+
+        cur_tx_pwr = (cur_tx_pwr +1) % DEVICE_BEACON_TXPOWER_NUM;
+        set_tx_power(txp[cur_tx_pwr]);
+
+
+        adv_start();
+    }
+
+    // we return the minimum timer time so that main can sleep
+    return MIN( k_timer_remaining_get(&rpi_timer), k_timer_remaining_get(&scan_timer));
+}
+
+
+
 
 
 int on_rpi() {
@@ -158,12 +236,11 @@ int on_rpi() {
     return 0;
 }
 
-
 static const struct bt_le_scan_param scan_param = {
         .type = BT_HCI_LE_SCAN_PASSIVE,
         .options = BT_LE_SCAN_OPT_FILTER_DUPLICATE,
-        .interval = 0x0010, //Scan Interval (N * 0.625 ms), TODO: set to correct interval
-        .window = 0x0010,	//Scan Window (N * 0.625 ms), TODO: set to correct interval
+        .interval = 0x0C80, //Scan Interval (N * 0.625 ms), TODO: set to correct interval
+        .window = 0x0C80,	//Scan Window (N * 0.625 ms), TODO: set to correct interval
 };
 
 static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type, struct net_buf_simple *buf)
@@ -232,24 +309,5 @@ int on_scan() {
     }
 
     printk("Scanning done... %u devices found\n", get_num_records()-num_devs);
-    return 0;
-}
-
-int on_adv() {
-    int err = 0;
-    err = bt_le_adv_start(BT_LE_ADV_PARAM(0, (ADV_INTERVAL_MS-10)/0.625, (ADV_INTERVAL_MS+10)/0.625, NULL), ad, ARRAY_SIZE(ad), NULL, 0);
-    if (err)
-    {
-        printk("Advertising failed to start (err %d)\n", err);
-        return err;
-    }
-    k_yield();
-    err = bt_le_adv_stop();
-    if (err)
-    {
-        printk("Advertising failed to stop (err %d)\n", err);
-        return err;
-    }
-
     return 0;
 }

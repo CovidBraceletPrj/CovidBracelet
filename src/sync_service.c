@@ -21,7 +21,7 @@ K_TIMER_DEFINE(sync_adv_timer, NULL, NULL);
 int sync_service_init(void) {
     // We init the timers (which should run periodically!)
     // we directly want to advertise ourselfs after the start -> should reduce unwanted delays
-    k_timer_start(&sync_adv_timer, K_NO_WAIT, K_MSEC(SYNC_ADV_INTERVAL_MS));
+    k_timer_start(&sync_adv_timer, K_MSEC(SYNC_ADV_INTERVAL_MS), K_MSEC(SYNC_ADV_INTERVAL_MS));
     return 0;
 }
 
