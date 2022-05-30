@@ -94,7 +94,7 @@ def calculate_consumption_per_day(labels, normalize_with_idle=True):
 # THE TOTAL EXPECTED AMOUNT PER DAY in milli ampere
 expected_consumption_per_day = 0.0
 
-idle_consumption = 0.500
+idle_consumption = 0.00256
 add_consumption(IDLE_LABEL, idle_consumption, 1.0, 1.0)
 
 # ADVERTISING
