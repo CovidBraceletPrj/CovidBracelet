@@ -27,6 +27,7 @@ typedef ENIntervalIdentifier ENIntervalIdentifier;
 
 #define RPI_ROTATION_MS_MIN (500*1000)
 #define RPI_ROTATION_MS_MAX (1250*1000)
+#define RPI_ROTATION_MS (600*1000)
 #define SCAN_INTERVAL_MS (5*60*1000)
 #define SCAN_DURATION_MS 2000
 #define ADV_INTERVAL_MS 250
@@ -137,8 +138,6 @@ int tracing_init()
     k_timer_start(&scan_timer, K_MSEC(SCAN_INTERVAL_MS), K_MSEC(SCAN_INTERVAL_MS));
 
 
-    set_tx_power(txp[cur_tx_pwr]);
-
     int err = 0;
     err = adv_start();
     if (err)
@@ -154,10 +153,21 @@ int tracing_init()
 uint32_t tracing_run()
 {
     if (k_timer_status_get(&rpi_timer) > 0) {
-        on_rpi();
-    }
+        int err = adv_stop();
 
-    // TODO: Randomize the adv power!
+        if (err)
+        {
+            printk("Advertising failed to stop (err %d)\n", err);
+        }
+
+        on_rpi();
+
+        // TODO: Enable power randomization!
+        //cur_tx_pwr = (cur_tx_pwr +1) % DEVICE_BEACON_TXPOWER_NUM;
+        //set_tx_power(txp[cur_tx_pwr]);
+
+        adv_start();
+    }
 
     if (k_timer_status_get(&scan_timer) > 0) {
         int err = adv_stop();
@@ -168,10 +178,6 @@ uint32_t tracing_run()
         }
 
         on_scan();
-
-        cur_tx_pwr = (cur_tx_pwr +1) % DEVICE_BEACON_TXPOWER_NUM;
-        set_tx_power(txp[cur_tx_pwr]);
-
 
         adv_start();
     }
