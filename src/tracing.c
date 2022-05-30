@@ -25,9 +25,10 @@
 
 typedef ENIntervalIdentifier ENIntervalIdentifier;
 
-#define RPI_ROTATION_MS (11*60*1000)
-#define SCAN_INTERVAL_MS (4*1000)
-#define SCAN_DURATION_MS 1000
+#define RPI_ROTATION_MS_MIN (500*1000)
+#define RPI_ROTATION_MS_MAX (1250*1000)
+#define SCAN_INTERVAL_MS (5*60*1000)
+#define SCAN_DURATION_MS 2000
 #define ADV_INTERVAL_MS 250
 
 
