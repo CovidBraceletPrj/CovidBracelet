@@ -28,7 +28,7 @@ typedef ENIntervalIdentifier ENIntervalIdentifier;
 #define RPI_ROTATION_MS_MIN (500*1000)
 #define RPI_ROTATION_MS_MAX (1250*1000)
 #define RPI_ROTATION_MS (600*1000)
-#define SCAN_INTERVAL_MS (5*60*1000)
+#define SCAN_INTERVAL_MS (10*1000)
 #define SCAN_DURATION_MS 2000
 #define ADV_INTERVAL_MS 250
 
@@ -48,6 +48,106 @@ static int on_scan();
 #define DEVICE_BEACON_TXPOWER_NUM  6
 static const int8_t txp[DEVICE_BEACON_TXPOWER_NUM] = {0, -4, -8,
                                                       -16, -20, -40};
+
+
+
+static void measure_performance()
+{
+    for(int runs2 = 0; runs2 < 10; runs2++) {
+        uint32_t runs = 1;
+        uint32_t start_time;
+        uint32_t cycles_spent;
+        uint32_t nanoseconds_spent;
+
+        ENPeriodKey pk;
+
+        ENPeriodIdentifierKey pik;
+        ENIntervalIdentifier intervalIdentifier;
+        ENIntervalNumber intervalNumber = 2642976;
+        ENIntervalIdentifier id;
+        ENPeriodMetadataEncryptionKey pmek;
+        unsigned char metadata[4] = {0x40, 0x08, 0x00, 0x00};
+        unsigned char encryptedMetadata[sizeof(metadata)] = {0};
+
+
+        // Measure en_generate_period_key
+        {
+            start_time = k_cycle_get_32();
+
+            for (int i = 0; i < runs; i++)
+            {
+                en_generate_period_key(&pk);
+            }
+
+
+        }
+
+        // Measure en_derive_period_identifier_key
+        {
+            start_time = k_cycle_get_32();
+
+            for (int i = 0; i < runs; i++)
+            {
+                en_derive_period_identifier_key(&pik, &pk);
+            }
+
+        }
+
+        // Measure en_derive_interval_identifier
+        {
+            start_time = k_cycle_get_32();
+
+            for (int i = 0; i < runs; i++)
+            {
+                en_derive_interval_identifier(&intervalIdentifier, &pik, intervalNumber);
+            }
+        }
+
+        // Measure en_derive_period_metadata_encryption_key
+        {
+            start_time = k_cycle_get_32();
+
+            for (int i = 0; i < runs; i++)
+            {
+                en_derive_period_metadata_encryption_key(&pmek, &pk);
+            }
+        }
+
+        // Measure en_encrypt_interval_metadata
+        {
+            start_time = k_cycle_get_32();
+
+            for (int i = 0; i < runs; i++)
+            {
+                en_encrypt_interval_metadata(&pmek, &intervalIdentifier, metadata, encryptedMetadata, sizeof(metadata));
+            }
+
+        }
+
+        // Measure Full key generation
+        {
+            start_time = k_cycle_get_32();
+
+            for (int i = 0; i < runs; i++)
+            {
+                ENPeriodKey pk;
+                en_generate_period_key(&pk);
+                ENPeriodIdentifierKey ik;
+                en_derive_period_identifier_key(&ik, &pk);
+
+                for(int iv = 0; iv < EN_TEK_ROLLING_PERIOD; iv++) {
+                    ENIntervalNumber intervalNumber = en_get_interval_number(iv);
+                    ENIntervalIdentifier id;
+                    en_derive_interval_identifier(&id, &ik, intervalNumber);
+                }
+            }
+        }
+
+        printk("\FINISHED\n");
+        printk("----------------------------------------\n\n");
+    }
+}
+
 
 static void set_tx_power(int8_t tx_pwr_lvl)
 {
@@ -171,6 +271,11 @@ uint32_t tracing_run()
 
     if (k_timer_status_get(&scan_timer) > 0) {
         int err = adv_stop();
+
+        k_msleep(50);
+        measure_performance();
+        k_msleep(50);
+
 
         if (err)
         {
