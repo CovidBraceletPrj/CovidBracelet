@@ -154,9 +154,11 @@ add_consumption('daily_crypto', crypt_consumption_avg, 0.22, 10)
 # One detailed graph as a comparison of the advertisements
 # One bar graph for each of the factors involved in the daily energy usage
 
-tek_check_duration = 0.020
-tek_check_amount = 32
-tek_check_consumption = 4
+tek_check_duration = 2.081
+tek_check_amount = 144
+tek_check_consumption = 3.74
+tek_check_consumption_max = 4.49
+
 
 # generate graph with keys to check
 # Worst case scenario: Flash is fully used!
