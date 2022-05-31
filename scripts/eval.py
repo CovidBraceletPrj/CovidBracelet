@@ -31,6 +31,9 @@ def load_plot_defaults():
     #mpl.style.use('tableau-colorblind10')
 
 
+idle_avg = 0.00252
+idle_max = 0.02325
+
 IDLE_LABEL = 'idle'
 consumptions = {}
 durations = {}
@@ -99,39 +102,53 @@ add_consumption(IDLE_LABEL, idle_consumption, 1.0, 1.0)
 
 # ADVERTISING
 adv_interval = 0.250
-per_adv_consumption = {
-    0: 2.23,
-    -4: 1.49 ,
-    -8: 1.43,
-    -16: 1.38,
-    -20: 1.3,
-    -40: 1.22,
-}
+adv_consumptions = [
+    2.45,
+    2.47,
+    2.41,
+    2.35,
+    2.47,
+    2.39,
+    2.45,
+    2.47,
+    2.49,
+    2.45
+]
+
+adv_max_consumption = [
+    7.66,
+    8.31,
+    6.96,
+    7.3,
+    7.77,
+    7.6,
+    8.55,
+    6.94,
+    7.14,
+    6.85
+]
+
+
+
 # TODO: Add error bars if possible!
 # measured_duration
 # duration
 # repetitions
-
-
 adv_consumption = sum(list(per_adv_consumption.values())) / len(per_adv_consumption.values())
 
-add_consumption('adv', adv_consumption, 0.01, (24*3600)/0.25)
+add_consumption('adv', adv_consumption, 0.004, (24*3600)/0.25)
 
 # SCANNING
-scan_consumption = 5.440
-add_consumption('scan', scan_consumption, 1.0, 24*60)
+scan_consumption = 6.01
+scan_consumption_max = 8.71
+add_consumption('scan', scan_consumption, 2.015, 24*60)
 
 
 crypt_duration = 0.01
-generate_tek_consumption = 2
-derive_tek_consumption = 2
-derive_rpi_consumption = 2
-encrypt_aem_consumption = 2
+crypt_consumption_avg = 3.2
+crypt_consumption_max = 5.96
 
-add_consumption('generate_tek', generate_tek_consumption, crypt_duration, 1)
-add_consumption('derive_tek', derive_tek_consumption, crypt_duration, 1)
-add_consumption('derive_rpi', derive_rpi_consumption, crypt_duration, 144)
-add_consumption('encrypt_aem', encrypt_aem_consumption, crypt_duration, 144*len(per_adv_consumption.values()))
+add_consumption('daily_crypto', crypt_consumption_avg, 0.22, 10)
 
 # A table for the timings of the cryptographic fundamentals
 # One detailed graph as a comparison of the advertisements
