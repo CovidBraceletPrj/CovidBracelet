@@ -195,7 +195,7 @@ def export_consumption_per_day():
     bars = ax.bar(ys,xs)
 
     xs_labels = ["{:.2f}".format(x) if x >= 0.01 else "<0.01" for x in xs]
-    ax.bar_label(bars, padding=3, labels=xs_labels)
+    ax.bar_label(bars, padding=0, labels=xs_labels)
 
     # Adapt the figure size as needed
 
@@ -225,7 +225,7 @@ def export_usage_seconds_per_day():
     bars = ax.bar(ys,xs)
 
     xs_labels = ["{:.2f}".format(x) if x >= 0.01 else "<0.01" for x in xs]
-    ax.bar_label(bars, padding=3, labels=xs_labels)
+    ax.bar_label(bars, padding=0, labels=xs_labels)
 
     ax = plt.gca()
     #ax.set_xlim([xmin, xmax])
@@ -253,7 +253,7 @@ def export_current_per_functionality():
     bars = ax.bar(ys,xs)
 
     xs_labels = ["{:.2f}".format(x) if x >= 0.01 else "<0.01" for x in xs]
-    ax.bar_label(bars, padding=3, fmt='%.2f', labels=xs_labels)
+    ax.bar_label(bars, padding=0, fmt='%.2f', labels=xs_labels)
 
     # Adapt the figure size as needed
     fig.set_size_inches(2.5, 2.75)
@@ -307,7 +307,7 @@ def export_tek_check():
     bar_labels = [means['GAEN'][i]+means['TEK Transport'][i]+means['TEK Check'][i] for (i,x) in enumerate(xs)]
     bar_labels = ['{:.2f}'.format(l) for l in bar_labels]
     print(bar_labels)
-    ax.bar_label(bars, padding=3, labels=bar_labels)
+    ax.bar_label(bars, padding=0, labels=bar_labels)
 
     ax.set_ylabel('Estimated Daily Consumption [mAh]')
     ax.set_xlabel('Number of TEKs per Day')
