@@ -27,9 +27,10 @@ def load_plot_defaults():
     plt.rc('errorbar', capsize=3)
     plt.rc('pdf', fonttype=42)
     plt.rc('ps', fonttype=42)
-    plt.rc('font', size=8, family="serif", serif=['Times New Roman'] + plt.rcParams['font.serif'])
+    plt.rc('font', size=10, family="serif", serif=['Times New Roman'] + plt.rcParams['font.serif'])
     #mpl.style.use('tableau-colorblind10')
 
+load_plot_defaults()
 
 idle_avg = 0.00252
 idle_max = 0.02325
@@ -188,7 +189,7 @@ def export_consumption_per_day():
 
     fig, ax = plt.subplots()
 
-    ax.set_ylabel('Avg. Consumption per Day [mA h]')
+    ax.set_ylabel('Avg. Daily Consumption [mA h]')
     ax.set_xlabel('Functionality')
 
     bars = ax.bar(ys,xs)
@@ -198,7 +199,7 @@ def export_consumption_per_day():
 
     # Adapt the figure size as needed
 
-    fig.set_size_inches(3.0, 3.2)
+    fig.set_size_inches(2.5, 2.75)
     ax.set_ylim([0, 2])
     plt.tight_layout()
     plt.savefig("../out/weighted_consumption.pdf", format="pdf", bbox_inches='tight')
@@ -223,7 +224,7 @@ def export_usage_seconds_per_day():
 
     bars = ax.bar(ys,xs)
 
-    xs_labels = ["{:.2f}%".format(x) if x >= 0.01 else "<0.01%" for x in xs]
+    xs_labels = ["{:.2f}".format(x) if x >= 0.01 else "<0.01" for x in xs]
     ax.bar_label(bars, padding=3, labels=xs_labels)
 
     ax = plt.gca()
@@ -231,7 +232,7 @@ def export_usage_seconds_per_day():
     ax.set_ylim([0, 109])
 
     # Adapt the figure size as needed
-    fig.set_size_inches(3.0, 3.2)
+    fig.set_size_inches(2.5, 2.7)
     plt.tight_layout()
     plt.savefig("../out/export_usage_seconds_per_day.pdf", format="pdf", bbox_inches='tight')
     plt.close()
@@ -255,7 +256,7 @@ def export_current_per_functionality():
     ax.bar_label(bars, padding=3, fmt='%.2f', labels=xs_labels)
 
     # Adapt the figure size as needed
-    fig.set_size_inches(3.0, 3.2)
+    fig.set_size_inches(2.5, 2.75)
     ax.set_ylim([0, 8])
     plt.tight_layout()
     plt.savefig("../out/current_per_functionality.pdf", format="pdf", bbox_inches='tight')
@@ -308,12 +309,12 @@ def export_tek_check():
     print(bar_labels)
     ax.bar_label(bars, padding=3, labels=bar_labels)
 
-    ax.set_ylabel('Estimated Consumption per Day [mAh]')
+    ax.set_ylabel('Estimated Daily Consumption [mAh]')
     ax.set_xlabel('Number of TEKs per Day')
     ax.legend()
 
     # Adapt the figure size as needed
-    fig.set_size_inches(4.2, 3.5)
+    fig.set_size_inches(3.6, 2.8)
     ax.set_ylim([0, 100])
     plt.tight_layout()
     plt.savefig("../out/tek_check.pdf", format="pdf", bbox_inches='tight')
