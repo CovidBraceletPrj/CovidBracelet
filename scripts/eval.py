@@ -134,17 +134,17 @@ adv_max_consumption = [
 # measured_duration
 # duration
 # repetitions
-adv_consumption = sum(list(per_adv_consumption.values())) / len(per_adv_consumption.values())
+adv_consumption = sum(list(adv_consumptions)) / len(adv_consumptions)
 
 add_consumption('adv', adv_consumption, 0.004, (24*3600)/0.25)
 
 # SCANNING
 scan_consumption = 6.01
 scan_consumption_max = 8.71
-add_consumption('scan', scan_consumption, 2.015, 24*60)
+add_consumption('scan', scan_consumption, 2.015, 24*12)
 
 
-crypt_duration = 0.01
+crypt_duration = 0.22
 crypt_consumption_avg = 3.2
 crypt_consumption_max = 5.96
 
@@ -175,42 +175,16 @@ tek_check_consumption_max = 4.49
 # measure consumption
 # extrapolate numbers for more keys!
 
-# We then get keys to check
-# 1000, 10000, 100000
-
-
-def export_adv_consumption():
-
-    xs = [per_adv_consumption[0], per_adv_consumption[-4], per_adv_consumption[-8], per_adv_consumption[-16], per_adv_consumption[-20], per_adv_consumption[-40]]
-    ys = ['0', '-4', '-8', '-16', '-20', '-40']
-
-    width = 0.6       # the width of the bars: can also be len(x) sequence
-
-    fig, ax = plt.subplots()
-
-    ax.set_ylabel('Avg. Advertising Current [µA]')
-    ax.set_xlabel('TX Power [dBm]')
-
-    bars = ax.bar(ys,xs)
-    ax.bar_label(bars, padding=5, fmt='%.2f')
-
-    #ax.set_title('')
-    #ax.legend() # (loc='upper center', bbox_to_anchor=(0.5, -0.5), ncol=2)
-
-    # Adapt the figure size as needed
-    fig.set_size_inches(3.5, 3.2)
-    plt.tight_layout()
-    plt.savefig("../out/adv_consumption.pdf", format="pdf", bbox_inches='tight')
-    plt.close()
-
 
 def export_consumption_per_day():
     cpd = calculate_consumption_per_day([
-        IDLE_LABEL, 'adv', 'scan', 'generate_tek', 'derive_tek', 'derive_rpi', 'encrypt_aem'
+        IDLE_LABEL, 'adv', 'scan', 'daily_crypto'
     ])
+    print("export_consumption_per_day")
+    print(cpd)
     print(sum(cpd.values()))
     ys = ['Idle', 'Adv.', 'Scan', 'Crypto\n(Daily)']
-    xs = [cpd[IDLE_LABEL], cpd['adv'], cpd['scan'], cpd['generate_tek']+cpd['derive_tek']+cpd['derive_rpi']+ cpd['encrypt_aem']]
+    xs = [cpd[IDLE_LABEL], cpd['adv'], cpd['scan'], cpd['daily_crypto']]
 
     fig, ax = plt.subplots()
 
@@ -218,10 +192,14 @@ def export_consumption_per_day():
     ax.set_xlabel('Functionality')
 
     bars = ax.bar(ys,xs)
-    ax.bar_label(bars, padding=5, fmt='%.2f')
+
+    xs_labels = ["{:.2f}".format(x) if x >= 0.01 else "<0.01" for x in xs]
+    ax.bar_label(bars, padding=3, labels=xs_labels)
 
     # Adapt the figure size as needed
-    fig.set_size_inches(3.5, 3.2)
+
+    fig.set_size_inches(3.0, 3.2)
+    ax.set_ylim([0, 2])
     plt.tight_layout()
     plt.savefig("../out/weighted_consumption.pdf", format="pdf", bbox_inches='tight')
     plt.close()
@@ -229,12 +207,14 @@ def export_consumption_per_day():
 
 def export_usage_seconds_per_day():
     cpd = calculate_usage_seconds_per_day([
-        IDLE_LABEL, 'adv', 'scan', 'generate_tek', 'derive_tek', 'derive_rpi', 'encrypt_aem'
+        IDLE_LABEL, 'adv', 'scan', 'daily_crypto'
     ])
+    print("export_usage_seconds_per_day")
     print(sum(cpd.values()))
+    print(cpd)
     ys = ['Idle', 'Adv.', 'Scan', 'Crypto\n(Daily)']
-    xs = [cpd[IDLE_LABEL], cpd['adv'], cpd['scan'], cpd['generate_tek']+cpd['derive_tek']+cpd['derive_rpi']+ cpd['encrypt_aem']]
-    xs = [x/(24*3600) for x in xs]
+    xs = [cpd[IDLE_LABEL], cpd['adv'], cpd['scan'], cpd['daily_crypto']]
+    xs = [100*x/(24*3600) for x in xs]
 
     fig, ax = plt.subplots()
 
@@ -242,18 +222,27 @@ def export_usage_seconds_per_day():
     ax.set_xlabel('Functionality')
 
     bars = ax.bar(ys,xs)
-    ax.bar_label(bars, padding=5, fmt='%.2f')
+
+    xs_labels = ["{:.2f}%".format(x) if x >= 0.01 else "<0.01%" for x in xs]
+    ax.bar_label(bars, padding=3, labels=xs_labels)
+
+    ax = plt.gca()
+    #ax.set_xlim([xmin, xmax])
+    ax.set_ylim([0, 109])
 
     # Adapt the figure size as needed
-    fig.set_size_inches(3.5, 3.2)
+    fig.set_size_inches(3.0, 3.2)
     plt.tight_layout()
     plt.savefig("../out/export_usage_seconds_per_day.pdf", format="pdf", bbox_inches='tight')
     plt.close()
 
 def export_current_per_functionality():
 
-    ys = ['Idle', 'Adv.', 'Scan', 'Daily\nSecret', 'TEK', 'RPI', 'AEM']
-    xs = [consumptions[IDLE_LABEL], consumptions['adv'], consumptions['scan'], consumptions['generate_tek'], consumptions['derive_tek'], consumptions['derive_rpi'], consumptions['encrypt_aem']]
+    ys = ['Idle', 'Adv.', 'Scan', 'Crypto\n(Daily)']
+    xs = [consumptions[IDLE_LABEL], consumptions['adv'], consumptions['scan'], consumptions['daily_crypto']]
+
+    print("export_current_per_functionality")
+    print(consumptions)
 
     fig, ax = plt.subplots()
 
@@ -261,38 +250,76 @@ def export_current_per_functionality():
     ax.set_xlabel('Functionality')
 
     bars = ax.bar(ys,xs)
-    ax.bar_label(bars, padding=5, fmt='%.2f')
+
+    xs_labels = ["{:.2f}".format(x) if x >= 0.01 else "<0.01" for x in xs]
+    ax.bar_label(bars, padding=3, fmt='%.2f', labels=xs_labels)
 
     # Adapt the figure size as needed
-    fig.set_size_inches(4.5, 3.2)
+    fig.set_size_inches(3.0, 3.2)
+    ax.set_ylim([0, 8])
     plt.tight_layout()
     plt.savefig("../out/current_per_functionality.pdf", format="pdf", bbox_inches='tight')
     plt.close()
 
 def export_tek_check():
-    tek_check_duration = 0.020
 
-    xs = [1000, 10000, 1000000]
-    ys = [x*tek_check_duration for x in xs]
+    xs = [0, 1250000, 2500000, 5000000]
 
-    xs = [str(x) for x in xs]
+    means = {}
+
+    for l in ['GAEN', 'TEK Transport', 'TEK Check']:
+        means[l] = []
+
+    for tpd in xs:
+        add_consumption('tek_check_' + str(tpd), tek_check_consumption, tek_check_duration, tpd, repetitions=tek_check_amount)
+        add_consumption('tek_transport_' + str(tpd), 8, 1.0, tpd, repetitions=3125)
+
+        print(tpd)
+
+        #upd = calculate_usage_seconds_per_day([
+        #    IDLE_LABEL, 'adv', 'scan', 'daily_crypto', 'tek_check_' + str(tpd), 'tek_transport_' + str(tpd)
+        #])
+        #print(upd)
+        cpd = calculate_consumption_per_day([
+            IDLE_LABEL, 'adv', 'scan', 'daily_crypto', 'tek_check_' + str(tpd), 'tek_transport_' + str(tpd)
+        ])
+        print(cpd)
+
+        means['GAEN'].append(cpd[IDLE_LABEL]+ cpd['adv']+cpd['scan']+ cpd['daily_crypto'])
+        means['TEK Transport'].append(cpd['tek_transport_' + str(tpd)])
+        means['TEK Check'].append(cpd['tek_check_' + str(tpd)])
+
+
+    labels = ['GAEN', 'TEK Transport', 'TEK Check']
+
+    width = 0.4      # the width of the bars: can also be len(x) sequence
 
     fig, ax = plt.subplots()
 
-    ax.set_ylabel('Extrapolated Time [s]')
-    ax.set_xlabel('Number of TEKs')
 
-    bars = ax.bar(xs,ys)
-    ax.bar_label(bars, padding=5, fmt='%d')
+    #xs = [str(x) for x in xs]
+    xs = ['0', '1,250,000', '2,500,000', '5,000,000']
+    ax.bar(xs, means['GAEN'], width, label='GAEN')
+    ax.bar(xs, means['TEK Transport'], width, label='TEK Transport', bottom=means['GAEN'])
+    bars = ax.bar(xs, means['TEK Check'], width, label='TEK Check', bottom=[means['GAEN'][i]+means['TEK Transport'][i] for (i,x) in enumerate(xs)])
+
+    bar_labels = [means['GAEN'][i]+means['TEK Transport'][i]+means['TEK Check'][i] for (i,x) in enumerate(xs)]
+    bar_labels = ['{:.2f}'.format(l) for l in bar_labels]
+    print(bar_labels)
+    ax.bar_label(bars, padding=3, labels=bar_labels)
+
+    ax.set_ylabel('Estimated Consumption per Day [mAh]')
+    ax.set_xlabel('Number of TEKs per Day')
+    ax.legend()
 
     # Adapt the figure size as needed
-    fig.set_size_inches(4.5, 3.2)
+    fig.set_size_inches(4.2, 3.5)
+    ax.set_ylim([0, 100])
     plt.tight_layout()
     plt.savefig("../out/tek_check.pdf", format="pdf", bbox_inches='tight')
     plt.close()
 
 
-export_adv_consumption()
 export_usage_seconds_per_day()
 export_consumption_per_day()
 export_current_per_functionality()
