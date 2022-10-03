@@ -1,4 +1,4 @@
-# Contact Tracing Wristband [![Actions Status: test](https://github.com/CovidBraceletPrj/CovidBracelet/workflows/test/badge.svg)](https://github.com/CovidBraceletPrj/CovidBracelet/actions) [![Actions Status: build](https://github.com/CovidBraceletPrj/CovidBracelet/workflows/build/badge.svg)](https://github.com/CovidBraceletPrj/CovidBracelet/actions)
+# TraceBand [![Actions Status: test](https://github.com/CovidBraceletPrj/CovidBracelet/workflows/test/badge.svg)](https://github.com/CovidBraceletPrj/CovidBracelet/actions) [![Actions Status: build](https://github.com/CovidBraceletPrj/CovidBracelet/workflows/build/badge.svg)](https://github.com/CovidBraceletPrj/CovidBracelet/actions)
 
 This project aims to add support the [Exposure Notification (EN) protocol for tracing contacts from Apple and Google](https://covid19.apple.com/contacttracing) on low-power wristbands. It maintains full compatibility with smartphone Apps based on the EN protocol.
 
