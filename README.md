@@ -19,6 +19,7 @@ This project aims to add support the [Exposure Notification (EN) protocol for tr
 * Retrieve keys of infections from database
   * computes rolling proximity identifiers 
   * compares to stored contacts to check for exposure
+* Android App (to be released)
 
 Note: as we for now do not use the flash for key storage, this currently only works on nrf52480 or you can just store a very small number of keys. Moving the keys to flash is on the TODO list and will fix this. 
 
