@@ -15,8 +15,8 @@ This project aims to add support the [Exposure Notification (EN) protocol for tr
   * Proximity identifiers and BLE addresses change every 10 minutes
 * Stores own keys for 14 days
 * Stores contacts of more than 5 minute duration
-* Upon infection upload keys to a public database
-* Retrieve keys of infections from database
+* Upon infection upload keys to a public database (WIP)
+* Retrieve keys of infections from database (WIP)
   * computes rolling proximity identifiers 
   * compares to stored contacts to check for exposure
 * Android App (to be released)
