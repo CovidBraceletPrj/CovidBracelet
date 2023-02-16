@@ -159,5 +159,40 @@ void main(void) {
     k_msleep(10000);
     bloom_test();
     return;
-    #endif    
+    #endif
+
+    /* Initialize the Bluetooth Subsystem */
+    err = bt_enable(NULL);
+    if (err) {
+        printk("Bluetooth init failed (err %d)\n", err);
+        return;
+    }
+
+    /* Initialize the Tracing Subsystem */
+    err = tracing_init();
+    if (err) {
+        printk("Tracing init failed (err %d)\n", err);
+        return;
+    }
+
+    /* Initialize the Gatt Subsystem */
+    err = sync_service_init();
+    if (err) {
+        printk("Sync Service init failed (err %d)\n", err);
+        return;
+    }
+
+    printk("Components initialized! Starting Tracing and Gatt...\n");
+
+    // We sleep just for one second
+    k_sleep(K_MSEC(1000));
+
+    do {
+        uint32_t tracing_sleep_ms = tracing_run();
+        uint32_t sync_sleep_ms = sync_service_run();
+
+        uint32_t sleep_ms = MIN(tracing_sleep_ms, sync_sleep_ms);
+        //printk("Sleeping a bit (%u ms)...\n", sleep_ms);
+        k_sleep(K_MSEC(sleep_ms)); // TODO: what to put here?
+    } while (1);
 }
