@@ -21,6 +21,10 @@
 #include "mbedtls/platform.h"
 
 
+#define BLOOM_TEST 0
+#define CLEAN_INIT (BLOOM_TEST)
+
+ #if BLOOM_TEST
 /**
  * Fill the bloom filter with all stored records.
  */
@@ -40,40 +44,7 @@ void fill_bloom_with_stored_records(bloom_filter_t* bloom) {
     }
 }
 
-void main(void) {
-
-    int err = 0;
-    printk("Starting Contact-Tracing Wristband...\n");
-
-     int ret = 0;
-
-    if((ret = mbedtls_platform_setup(NULL)) != 0) {
-        mbedtls_printf("Platform initialization failed with error %d\r\n", ret);
-        return 1;
-    }
-
-    // Use custom randomization as the mbdet_tls context initialization messes with the Zeyhr BLE stack.
-    err = en_init(sys_csrand_get);
-    if (err) {
-        printk("Crypto init failed (err %d)\n", err);
-        return;
-    }
-
-    err = record_storage_init(true);
-    if (err) {
-        printk("init record storage failed (err %d)\n", err);
-        return;
-    }
-
-
-    err = tek_storage_init(false);
-    if (err) {
-        printk("init key storage failed (err %d)\n", err);
-        return;
-    }
-
-    k_msleep(10000);
-
+void bloom_test() {
     printk("Filling record storage...\n");
     reset_record_storage();
 
@@ -149,4 +120,44 @@ void main(void) {
         }
         k_sleep(K_MSEC(2000));
     } while (1);
+}
+#endif
+
+void main(void) {
+
+    int err = 0;
+    printk("Starting Contact-Tracing Wristband...\n");
+
+     int ret = 0;
+
+    if((ret = mbedtls_platform_setup(NULL)) != 0) {
+        mbedtls_printf("Platform initialization failed with error %d\r\n", ret);
+        return;
+    }
+
+    // Use custom randomization as the mbdet_tls context initialization messes with the Zeyhr BLE stack.
+    err = en_init(sys_csrand_get);
+    if (err) {
+        printk("Crypto init failed (err %d)\n", err);
+        return;
+    }
+
+    err = record_storage_init(CLEAN_INIT);
+    if (err) {
+        printk("init record storage failed (err %d)\n", err);
+        return;
+    }
+
+
+    err = tek_storage_init(CLEAN_INIT);
+    if (err) {
+        printk("init key storage failed (err %d)\n", err);
+        return;
+    }
+
+    #if BLOOM_TEST
+    k_msleep(10000);
+    bloom_test();
+    return;
+    #endif    
 }
